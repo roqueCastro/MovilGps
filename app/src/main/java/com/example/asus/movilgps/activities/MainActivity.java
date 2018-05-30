@@ -3,6 +3,7 @@ package com.example.asus.movilgps.activities;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Address;
@@ -11,8 +12,10 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.location.LocationProvider;
+import android.os.Build;
 import android.os.Handler;
 import android.support.v4.app.ActivityCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -103,6 +106,12 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+    }
+
     private void locationStart() {
         LocationManager mlocManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         Localizacion Local = new Localizacion();
@@ -142,8 +151,11 @@ public class MainActivity extends AppCompatActivity {
                         loc.getLatitude(), loc.getLongitude(), 1);
                 if (!list.isEmpty()) {
                     Address DirCalle = list.get(0);
-                    String dir = DirCalle.getLocality().toString();
-                    direccion.setText(dir);
+                    String pais = DirCalle.getCountryName();
+                    String departamento = DirCalle.getAdminArea();
+                    String ciudad = DirCalle.getLocality().toString();
+                    String calle = DirCalle.getAddressLine(0);
+                    direccion.setText(pais+", "+departamento+"-"+ciudad+"  ''/"+calle+"/'' ");
                 }
 
             } catch (IOException e) {
@@ -206,13 +218,35 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    /**    Dialogs ALERT INSERT **/
+    private void showSalir(String title, String message) {
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        if (title != null) builder.setTitle(title);
+        if (message != null) builder.setMessage(message);
+
+        builder.setPositiveButton("Salir", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                MainActivity.super.onBackPressed();
+            }
+        });
+        builder.setNegativeButton("Cancelar", null);
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
 
     @Override
     public void onBackPressed() {
        gpsEnaDis();
 
         if (tiempoPrimerClick + INTERVALO > System.currentTimeMillis()){
-            super.onBackPressed();
+            //super.onBackPressed();
+            showSalir("Quieres salir?", "Deseas dejar esta aplicacion");
+
             return;
         }else {
             Toast.makeText(this, "Presionar dos veces para salir", Toast.LENGTH_SHORT).show();
