@@ -15,6 +15,7 @@ import android.location.LocationManager;
 import android.location.LocationProvider;
 import android.os.Build;
 import android.os.Handler;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -43,6 +44,7 @@ public class MainActivity extends AppCompatActivity {
     Button btnEnvio;
     ProgressDialog progreso;
     Context context;
+    FloatingActionButton gps;
 
 
     ArrayList<String> listaEventos;
@@ -52,6 +54,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        gps = findViewById(R.id.fabGps);
         latitude = findViewById(R.id.TextLatitud);
         longitude = findViewById(R.id.TextLongitud);
         direccion = findViewById(R.id.TextDireccion);
@@ -59,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
         btnEnvio = findViewById(R.id.btn_Enviar);
 
         context = MainActivity.this;
-        gpsEnaDis();
+
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -72,9 +75,18 @@ public class MainActivity extends AppCompatActivity {
         ArrayAdapter<CharSequence> adapter = new ArrayAdapter(this,android.R.layout.simple_spinner_item,listaEventos);
         spinner.setAdapter(adapter);
 
+        gps.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                locationStart();
+                gps.setEnabled(false);
+            }
+        });
+
         btnEnvio.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                locationStart();
                 progreso = new ProgressDialog(context);
                 progreso.setMessage("Cargando coordenadas..");
                 progreso.show();
@@ -120,16 +132,9 @@ public class MainActivity extends AppCompatActivity {
 
     private void gpsEnaDis() {
         final LocationManager manager = (LocationManager) getSystemService( Context.LOCATION_SERVICE );
-
         if ( !manager.isProviderEnabled( LocationManager.GPS_PROVIDER ) ) {
             startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
         }
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-
     }
 
     private void locationStart() {
@@ -138,8 +143,6 @@ public class MainActivity extends AppCompatActivity {
         Local.setMainActivity(this);
         gpsEnaDis();
         onstartGos(mlocManager,Local);
-
-
     }
 
     // permisos de ubicacion
@@ -149,7 +152,7 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        mlocManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 01, (LocationListener) Local);
+        mlocManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, (LocationListener) Local);
         mlocManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, (LocationListener) Local);
     }
 
@@ -172,11 +175,9 @@ public class MainActivity extends AppCompatActivity {
                         loc.getLatitude(), loc.getLongitude(), 1);
                 if (!list.isEmpty()) {
                     Address DirCalle = list.get(0);
-                    String pais = DirCalle.getCountryName();
-                    String departamento = DirCalle.getAdminArea();
-                    String ciudad = DirCalle.getLocality().toString();
                     String calle = DirCalle.getAddressLine(0);
-                    direccion.setText(pais+", "+departamento+"-"+ciudad+"  ''/"+calle+"/'' ");
+                    direccion.setText(calle);
+                    gps.setEnabled(true);
                 }
 
             } catch (IOException e) {
@@ -213,7 +214,6 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onProviderDisabled(String provider) {
             // Este metodo se ejecuta cuando el GPS es desactivado
-            gpsEnaDis();
         }
 
         @Override
@@ -236,6 +236,7 @@ public class MainActivity extends AppCompatActivity {
                     break;
             }
         }
+
     }
 
 
@@ -262,8 +263,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-       gpsEnaDis();
-
         if (tiempoPrimerClick + INTERVALO > System.currentTimeMillis()){
             //super.onBackPressed();
             showSalir("Quieres salir?", "Deseas dejar esta aplicacion");
