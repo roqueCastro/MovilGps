@@ -2,6 +2,7 @@ package com.example.asus.movilgps.activities;
 
 
 import android.Manifest;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -40,6 +41,9 @@ public class MainActivity extends AppCompatActivity {
     TextView latitude,longitude,direccion;
     Spinner spinner;
     Button btnEnvio;
+    ProgressDialog progreso;
+    Context context;
+
 
     ArrayList<String> listaEventos;
 
@@ -54,6 +58,7 @@ public class MainActivity extends AppCompatActivity {
         spinner = findViewById(R.id.spinnerSeleEncu);
         btnEnvio = findViewById(R.id.btn_Enviar);
 
+        context = MainActivity.this;
         gpsEnaDis();
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
@@ -62,6 +67,7 @@ public class MainActivity extends AppCompatActivity {
         } else {
             locationStart();
         }
+
         obtenerList();
         ArrayAdapter<CharSequence> adapter = new ArrayAdapter(this,android.R.layout.simple_spinner_item,listaEventos);
         spinner.setAdapter(adapter);
@@ -69,8 +75,22 @@ public class MainActivity extends AppCompatActivity {
         btnEnvio.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent i = new Intent(MainActivity.this, PreguntasActivity.class);
-                startActivity(i);
+                progreso = new ProgressDialog(context);
+                progreso.setMessage("Cargando coordenadas..");
+                progreso.show();
+                new android.os.Handler().postDelayed(
+                        new Runnable() {
+                            public void run() {
+                                String lat = latitude.getText().toString();
+                                String lon = longitude.getText().toString();
+
+                                Intent i = new Intent(MainActivity.this, PreguntasActivity.class);
+                                i.putExtra("latitud", lat);
+                                i.putExtra("longitud", lon);
+                                startActivity(i);
+                                progreso.dismiss();
+                            }
+                        }, 3000);
             }
         });
 
@@ -122,6 +142,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    // permisos de ubicacion
     private void onstartGos(LocationManager mlocManager, Localizacion Local) {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION,}, 1000);
@@ -218,7 +239,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    /**    Dialogs ALERT INSERT **/
+    /**    Dialogs ALERT SALIR **/
     private void showSalir(String title, String message) {
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
