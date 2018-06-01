@@ -28,7 +28,20 @@ import android.widget.Button;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 import com.example.asus.movilgps.R;
+import com.example.asus.movilgps.Utilidades.Utilidades_Request;
+import com.example.asus.movilgps.models.Encuestas;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -46,8 +59,12 @@ public class MainActivity extends AppCompatActivity {
     Context context;
     FloatingActionButton gps;
 
+    RequestQueue request;
+    JsonObjectRequest jsonObjectRequest;
+
 
     ArrayList<String> listaEventos;
+    ArrayList<Encuestas> encuestass;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,6 +79,8 @@ public class MainActivity extends AppCompatActivity {
         btnEnvio = findViewById(R.id.btn_Enviar);
 
         context = MainActivity.this;
+        encuestass= new ArrayList<>();
+        request = Volley.newRequestQueue(getApplicationContext());
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
@@ -70,10 +89,7 @@ public class MainActivity extends AppCompatActivity {
         } else {
             locationStart();
         }
-
-        obtenerList();
-        ArrayAdapter<CharSequence> adapter = new ArrayAdapter(this,android.R.layout.simple_spinner_item,listaEventos);
-        spinner.setAdapter(adapter);
+        cargarwebservice();
 
         gps.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -93,13 +109,24 @@ public class MainActivity extends AppCompatActivity {
                 new android.os.Handler().postDelayed(
                         new Runnable() {
                             public void run() {
-                                String lat = latitude.getText().toString();
-                                String lon = longitude.getText().toString();
+                                int idComboEncuesta = (int) spinner.getSelectedItemId();
+                                String idCombo =  spinner.getSelectedItem().toString();
+                                if(idComboEncuesta != 0){
+                                    String lat = latitude.getText().toString();
+                                    String lon = longitude.getText().toString();
+                                    String id = String.valueOf(idComboEncuesta);
+                                    Toast.makeText(context, idCombo , Toast.LENGTH_SHORT).show();
 
-                                Intent i = new Intent(MainActivity.this, PreguntasActivity.class);
-                                i.putExtra("latitud", lat);
-                                i.putExtra("longitud", lon);
-                                startActivity(i);
+                                    Intent i = new Intent(MainActivity.this, PreguntasActivity.class);
+                                    i.putExtra("latitud", lat);
+                                    i.putExtra("longitud", lon);
+                                    i.putExtra("idEncuesta", id);
+                                    startActivity(i);
+                                }else{
+                                    Toast.makeText(context, "Tienes que seleccionar un evento", Toast.LENGTH_SHORT).show();
+                                    spinner.setFocusable(true);
+                                }
+
                                 progreso.dismiss();
                             }
                         }, 3000);
@@ -109,8 +136,11 @@ public class MainActivity extends AppCompatActivity {
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                String ids = String.valueOf(position);
-                Toast.makeText(getApplicationContext(), ids  , Toast.LENGTH_SHORT).show();
+                String selec=spinner.getSelectedItem().toString();
+                String[] split = selec.split("-");
+                String b= split[0];
+
+                Toast.makeText(context, b , Toast.LENGTH_SHORT).show();
             }
 
             @Override
@@ -120,14 +150,52 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private void cargarwebservice() {
+        String url = Utilidades_Request.HTTP + Utilidades_Request.IP + Utilidades_Request.CARPETA + "WSConsultaEncuestas.php";
+
+        jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+               // Toast.makeText(getApplicationContext(), response.toString(), Toast.LENGTH_SHORT).show();
+
+                 Encuestas encuestas = null;
+                JSONArray json = response.optJSONArray("encuesta");
+
+                try {
+                    for (int i = 0; i < json.length(); i++) {
+                        encuestas = new Encuestas();
+                        JSONObject jsonObject = null;
+
+                        jsonObject = json.getJSONObject(i);
+
+                        encuestas.setId_encuesta(jsonObject.optInt("id_encuesta"));
+                        encuestas.setNombre_encuesta(jsonObject.optString("nomb_encta"));
+                        encuestass.add(encuestas);
+                    }
+                    obtenerList();
+
+                }catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Toast.makeText(context, "Error webservice", Toast.LENGTH_SHORT).show();
+            }
+        });
+        request.add(jsonObjectRequest);
+    }
+
     private void obtenerList() {
         listaEventos = new ArrayList<String>();
-        listaEventos.add("Seleccione");
-        listaEventos.add("Incendio");
-        listaEventos.add("LLuvias");
-        listaEventos.add("Deslizamiento");
-        listaEventos.add("Fuga de gas");
-        listaEventos.add("Otros");
+        listaEventos.add("Seleccione tipo encuesta");
+        for(int i=0; i<encuestass.size(); i++){
+            listaEventos.add(encuestass.get(i).getId_encuesta()+" - "+ encuestass.get(i).getNombre_encuesta());
+        }
+
+        ArrayAdapter<CharSequence> adapter = new ArrayAdapter(this,android.R.layout.simple_spinner_item,listaEventos);
+        spinner.setAdapter(adapter);
     }
 
     private void gpsEnaDis() {
@@ -185,6 +253,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+
 
     // CLASE LOCATION
     public class Localizacion implements LocationListener {
