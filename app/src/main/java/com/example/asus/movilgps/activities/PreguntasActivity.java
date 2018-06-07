@@ -73,19 +73,14 @@ public class PreguntasActivity extends AppCompatActivity {
             public void onResponse(String response) {
                 progreso.hide();
 
-                if(response.trim().equalsIgnoreCase("Registra")){
-                    Toast.makeText(context,"Registro exitosamente ", Toast.LENGTH_SHORT).show();
-
-                    Intent intent = new Intent(PreguntasActivity.this, MainActivity.class);
-                    intent.putExtra("registro", "1");
-                    startActivity(intent);
-
-                }else if(response.trim().equalsIgnoreCase("Noregistra")){
+                if(response.trim().equalsIgnoreCase("Noregistra")){
                     Toast.makeText(context,"No registro ocurrio un error ", Toast.LENGTH_SHORT).show();
 
                     Intent intent = new Intent(PreguntasActivity.this, MainActivity.class);
-                    intent.putExtra("registro", "2");
                     startActivity(intent);
+
+                }else{
+                    Toast.makeText(context,response, Toast.LENGTH_SHORT).show();
                 }
             }
         }, new Response.ErrorListener() {

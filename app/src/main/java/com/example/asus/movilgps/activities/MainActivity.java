@@ -74,6 +74,7 @@ public class MainActivity extends AppCompatActivity {
 
     ArrayList<String> listaEventos;
     ArrayList<Encuestas> encuestass;
+    ArrayAdapter<CharSequence> adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -198,10 +199,13 @@ public class MainActivity extends AppCompatActivity {
         listaEventos = new ArrayList<String>();
         listaEventos.add("Seleccione tipo encuesta");
         for(int i=0; i<encuestass.size(); i++){
+            if(listaEventos.get(i).equals(encuestass.get(i).getId_encuesta())){
+                Toast.makeText(context,"repetidos", Toast.LENGTH_SHORT).show();
+            }
             listaEventos.add(encuestass.get(i).getId_encuesta()+" - "+ encuestass.get(i).getNombre_encuesta());
         }
 
-        ArrayAdapter<CharSequence> adapter = new ArrayAdapter(this,android.R.layout.simple_spinner_item,listaEventos);
+        adapter= new ArrayAdapter(this,android.R.layout.simple_spinner_item,listaEventos);
         spinner.setAdapter(adapter);
     }
 
@@ -346,8 +350,7 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()){
             case R.id.upload:
-                Toast.makeText(context, "Upload", Toast.LENGTH_SHORT).show();
-               // cargarwebservice();
+                startActivity(getIntent());
                 break;
         }
         return super.onOptionsItemSelected(item);
