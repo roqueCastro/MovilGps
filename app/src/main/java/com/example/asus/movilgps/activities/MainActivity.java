@@ -2,6 +2,7 @@ package com.example.asus.movilgps.activities;
 
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -15,12 +16,15 @@ import android.location.LocationManager;
 import android.location.LocationProvider;
 import android.os.Build;
 import android.os.Handler;
+import android.os.Message;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -47,11 +51,16 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.logging.LogRecord;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final int INTERVALO = 2000; //2 segundos para salir
     private long tiempoPrimerClick;
+    final long PERIODO = 60000; // 1 minuto
+    private Handler handler;
+    private Runnable runnable;
+
     TextView latitude,longitude,direccion;
     Spinner spinner;
     Button btnEnvio;
@@ -327,6 +336,22 @@ public class MainActivity extends AppCompatActivity {
         dialog.show();
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_activity, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()){
+            case R.id.upload:
+                Toast.makeText(context, "Upload", Toast.LENGTH_SHORT).show();
+               // cargarwebservice();
+                break;
+        }
+        return super.onOptionsItemSelected(item);
+    }
 
     @Override
     public void onBackPressed() {
