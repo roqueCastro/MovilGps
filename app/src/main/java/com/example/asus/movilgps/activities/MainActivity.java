@@ -109,18 +109,19 @@ public class MainActivity extends AppCompatActivity {
                 new android.os.Handler().postDelayed(
                         new Runnable() {
                             public void run() {
-                                int idComboEncuesta = (int) spinner.getSelectedItemId();
-                                String idCombo =  spinner.getSelectedItem().toString();
-                                if(idComboEncuesta != 0){
+                                String selec=spinner.getSelectedItem().toString();
+                                String[] split = selec.split("-");
+                                String b= split[0];
+
+                                if(b  != "Seleccione tipo encuesta"){
                                     String lat = latitude.getText().toString();
                                     String lon = longitude.getText().toString();
-                                    String id = String.valueOf(idComboEncuesta);
-                                    Toast.makeText(context, idCombo , Toast.LENGTH_SHORT).show();
+
 
                                     Intent i = new Intent(MainActivity.this, PreguntasActivity.class);
                                     i.putExtra("latitud", lat);
                                     i.putExtra("longitud", lon);
-                                    i.putExtra("idEncuesta", id);
+                                    i.putExtra("idEncuesta", b);
                                     startActivity(i);
                                 }else{
                                     Toast.makeText(context, "Tienes que seleccionar un evento", Toast.LENGTH_SHORT).show();
@@ -136,11 +137,6 @@ public class MainActivity extends AppCompatActivity {
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                String selec=spinner.getSelectedItem().toString();
-                String[] split = selec.split("-");
-                String b= split[0];
-
-                Toast.makeText(context, b , Toast.LENGTH_SHORT).show();
             }
 
             @Override
@@ -181,10 +177,12 @@ public class MainActivity extends AppCompatActivity {
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-                Toast.makeText(context, "Error webservice", Toast.LENGTH_SHORT).show();
+
+                Toast.makeText(context, "Error webservice. \n"+
+                        "No hay conexion con la base de datos.", Toast.LENGTH_SHORT).show();
             }
         });
-        request.add(jsonObjectRequest);
+            request.add(jsonObjectRequest);
     }
 
     private void obtenerList() {
@@ -339,6 +337,7 @@ public class MainActivity extends AppCompatActivity {
             return;
         }else {
             Toast.makeText(this, "Presionar dos veces para salir", Toast.LENGTH_SHORT).show();
+          // cargarwebservice();
         }
         tiempoPrimerClick = System.currentTimeMillis();
 
