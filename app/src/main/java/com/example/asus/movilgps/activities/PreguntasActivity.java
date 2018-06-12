@@ -35,7 +35,6 @@ import java.util.Map;
 public class PreguntasActivity extends AppCompatActivity implements Response.Listener<JSONObject>,
         Response.ErrorListener, AdapterView.OnItemClickListener{
 
-    ArrayList<String> listaPreguntas;
     ProgressDialog progreso;
     Context context;
    // ArrayList<Encuestas> encuestass;
@@ -185,7 +184,8 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         String id_pre = String.valueOf(preguntas.get(position).getId_pre());
 
-        Intent intent = new Intent();
+        Intent intent = new Intent(PreguntasActivity.this, RespuestaActivity.class);
+        intent.putExtra("id_pre", id_pre);
         startActivity(intent);
     }
 }
