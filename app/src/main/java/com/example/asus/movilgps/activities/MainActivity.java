@@ -113,34 +113,43 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 locationStart();
-                progreso = new ProgressDialog(context);
-                progreso.setMessage("Cargando coordenadas..");
-                progreso.show();
-                new android.os.Handler().postDelayed(
-                        new Runnable() {
-                            public void run() {
-                                String selec=spinner.getSelectedItem().toString();
-                                String[] split = selec.split("-");
-                                String b= split[0];
 
-                                if(b  != "Seleccione tipo encuesta"){
-                                    String lat = latitude.getText().toString();
-                                    String lon = longitude.getText().toString();
+                String selec=spinner.getSelectedItem().toString();
+                if(selec!="0.1"){
+                    String[] split = selec.split("-");
+                    String b= split[0];
+
+                    if(b  != "Seleccione tipo encuesta"){
+                        progreso = new ProgressDialog(context);
+                        progreso.setMessage("Cargando coordenadas..");
+                        progreso.show();
+                        new android.os.Handler().postDelayed(
+                                new Runnable() {
+                                    public void run() {
+                                        String selec=spinner.getSelectedItem().toString();
+                                        String[] split = selec.split("-");
+                                        String b= split[0];
+                                        String lat = latitude.getText().toString();
+                                        String lon = longitude.getText().toString();
 
 
-                                    Intent i = new Intent(MainActivity.this, PreguntasActivity.class);
-                                    i.putExtra("latitud", lat);
-                                    i.putExtra("longitud", lon);
-                                    i.putExtra("idEncuesta", b);
-                                    startActivity(i);
-                                }else{
-                                    Toast.makeText(context, "Tienes que seleccionar un evento", Toast.LENGTH_SHORT).show();
-                                    spinner.setFocusable(true);
-                                }
+                                        Intent i = new Intent(MainActivity.this, PreguntasActivity.class);
+                                        i.putExtra("latitud", lat);
+                                        i.putExtra("longitud", lon);
+                                        i.putExtra("idEncuesta", b);
+                                        startActivity(i);
 
-                                progreso.dismiss();
-                            }
-                        }, 3000);
+                                        progreso.dismiss();
+                                    }
+                                }, 3000);
+                    }else{
+                        Toast.makeText(context, "Tienes que seleccionar un evento", Toast.LENGTH_SHORT).show();
+                        spinner.setFocusable(true);
+                    }
+                }else{
+                    Toast.makeText(context, "No tienes conexion con la base de datos", Toast.LENGTH_SHORT).show();
+
+                }
             }
         });
 
@@ -212,7 +221,7 @@ public class MainActivity extends AppCompatActivity {
     private void gpsEnaDis() {
         final LocationManager manager = (LocationManager) getSystemService( Context.LOCATION_SERVICE );
         if ( !manager.isProviderEnabled( LocationManager.GPS_PROVIDER ) ) {
-            startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+            showAlertGPS("ACTIVAR", "GPS");
         }
     }
 
@@ -331,7 +340,29 @@ public class MainActivity extends AppCompatActivity {
         builder.setPositiveButton("Salir", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                MainActivity.super.onBackPressed();
+                Intent intent = new Intent(Intent.ACTION_MAIN);
+                intent.addCategory(Intent.CATEGORY_HOME);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+                MainActivity.super.finish();
+            }
+        });
+        builder.setNegativeButton("Cancelar", null);
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+    private void showAlertGPS(String title, String message) {
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        if (title != null) builder.setTitle(title);
+        if (message != null) builder.setMessage(message);
+
+        builder.setPositiveButton("Activar gps", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
             }
         });
         builder.setNegativeButton("Cancelar", null);
@@ -368,6 +399,5 @@ public class MainActivity extends AppCompatActivity {
           // cargarwebservice();
         }
         tiempoPrimerClick = System.currentTimeMillis();
-
     }
 }

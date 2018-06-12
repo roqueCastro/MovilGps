@@ -7,10 +7,19 @@
     android:layout_margin="8dp"
     tools:context="com.example.asus.movilgps.activities.PreguntasActivity">
 
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Preguntas a solucionar"
+        android:textStyle="bold"
+        android:textSize="30dp"
+        />
     <ListView
         android:id="@+id/listViewPreguntas"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_marginTop="45dp"
+        android:paddingLeft="10dp"
         />
 
 </RelativeLayout>
