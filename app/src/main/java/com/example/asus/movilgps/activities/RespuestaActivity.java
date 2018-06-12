@@ -58,7 +58,7 @@ public class RespuestaActivity extends AppCompatActivity implements Response.Lis
         progreso.setMessage("Cargando respuestas..");
         progreso.show();
 
-        String url = Utilidades_Request.HTTP+Utilidades_Request.IP+Utilidades_Request.CARPETA+"wsJSONConsultaPreguntas.php?id_encuesta="+idPregunta+"";
+        String url = Utilidades_Request.HTTP+Utilidades_Request.IP+Utilidades_Request.CARPETA+"wsJSONConsultaRespuestas.php?id_pregunta="+idPregunta+"";
 
         jsonObjectRequest = new JsonObjectRequest(Request.Method.GET,url,null,this,this);
         request.add(jsonObjectRequest);
@@ -66,7 +66,7 @@ public class RespuestaActivity extends AppCompatActivity implements Response.Lis
 
     @Override
     public void onResponse(JSONObject response) {
-
+        Toast.makeText(context, response.toString() ,Toast.LENGTH_SHORT).show();
     }
 
     @Override

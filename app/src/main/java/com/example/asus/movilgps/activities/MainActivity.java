@@ -172,7 +172,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onResponse(JSONObject response) {
                // Toast.makeText(getApplicationContext(), response.toString(), Toast.LENGTH_SHORT).show();
-
+                btnEnvio.setEnabled(true);
                  Encuestas encuestas = null;
                 JSONArray json = response.optJSONArray("encuesta");
 
@@ -199,6 +199,7 @@ public class MainActivity extends AppCompatActivity {
 
                 Toast.makeText(context, "Error webservice. \n"+
                         "No hay conexion con la base de datos.", Toast.LENGTH_SHORT).show();
+                btnEnvio.setEnabled(false);
             }
         });
             request.add(jsonObjectRequest);
