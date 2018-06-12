@@ -41,6 +41,7 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
    ArrayList<Pregunta> preguntas;
    private PreguntaAdapte adapter;
    ListView listView;
+   private String Evento;
 
 
     RequestQueue request;
@@ -95,7 +96,8 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
                     startActivity(intent);
 
                 }else{
-                    Toast.makeText(context,"Registro Exitoso ", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context,"Registro Exitoso "+response.toString(), Toast.LENGTH_SHORT).show();
+                    Evento= response.toString();
                     cargarWebServicePreguntas(idEncuesta);
                 }
             }
@@ -186,6 +188,7 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
 
         Intent intent = new Intent(PreguntasActivity.this, RespuestaActivity.class);
         intent.putExtra("id_pre", id_pre);
+        intent.putExtra("id_evento", Evento);
         startActivity(intent);
     }
 }

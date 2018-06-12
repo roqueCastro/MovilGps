@@ -21,6 +21,8 @@ import com.example.asus.movilgps.Utilidades.Utilidades_Request;
 import com.example.asus.movilgps.adapters.RespuestaAdapte;
 import com.example.asus.movilgps.models.Respuesta;
 
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -39,6 +41,8 @@ public class RespuestaActivity extends AppCompatActivity implements Response.Lis
     JsonObjectRequest jsonObjectRequest;
     StringRequest stringRequest;
 
+    private String idEvento;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -50,6 +54,7 @@ public class RespuestaActivity extends AppCompatActivity implements Response.Lis
         respuestas = new ArrayList<>();
 
         String idPregunta = getIntent().getStringExtra("id_pre");
+        idEvento = getIntent().getStringExtra("id_evento");
         cargarWebService(idPregunta);
     }
 
@@ -66,17 +71,56 @@ public class RespuestaActivity extends AppCompatActivity implements Response.Lis
 
     @Override
     public void onResponse(JSONObject response) {
-        Toast.makeText(context, response.toString() ,Toast.LENGTH_SHORT).show();
+        progreso.dismiss();
+
+        Respuesta respuesta = null;
+
+
+        JSONArray json = response.optJSONArray("respuesta");
+
+        try {
+            for(int i=0;i<json.length(); i++){
+                respuesta = new Respuesta();
+                JSONObject jsonObject = null;
+
+                jsonObject = json.getJSONObject(i);
+                if(jsonObject.optInt("id_rpta")==0){
+                    Toast.makeText(getApplicationContext(),"no existe en la bd" , Toast.LENGTH_SHORT).show();
+                }else{
+                    respuesta.setId_resp(jsonObject.optInt("id_rpta"));
+                    respuesta.setNombre_resp(jsonObject.optString("nomb_rpta"));
+                    respuestas.add(respuesta);
+                }
+            }
+            progreso.hide();
+
+            adapter  = new RespuestaAdapte(this, respuestas, R.layout.list_view_respuesta_item);
+            listView.setAdapter(adapter);
+            listView.setOnItemClickListener(this);
+            //envio getContext
+
+            //recyclerUser.setAdapter(adapter);
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+            Toast.makeText(getApplicationContext(),"No se a podido tener conexion con el servidor " , Toast.LENGTH_SHORT).show();
+            progreso.hide();
+
+        }
+
     }
 
     @Override
     public void onErrorResponse(VolleyError error) {
-
+        progreso.dismiss();
+        Toast.makeText(context, error.toString() ,Toast.LENGTH_SHORT).show();
     }
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-
+        String ms = "ID de la respuesta "+respuestas.get(position).getId_resp()+ "\n"+
+                     "ID Evento "+ idEvento;
+        Toast.makeText(getApplicationContext(),ms , Toast.LENGTH_SHORT).show();
     }
 
 }
