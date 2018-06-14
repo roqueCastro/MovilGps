@@ -178,11 +178,14 @@ public class MainActivity extends AppCompatActivity {
 
                 try {
                     for (int i = 0; i < json.length(); i++) {
+                        for(int o=0; o< encuestass.size(); o++){
+
+                            Toast.makeText(context, "nn "+String.valueOf(o), Toast.LENGTH_SHORT).show();
+                        }
                         encuestas = new Encuestas();
                         JSONObject jsonObject = null;
 
                         jsonObject = json.getJSONObject(i);
-
                         encuestas.setId_encuesta(jsonObject.optInt("id_encuesta"));
                         encuestas.setNombre_encuesta(jsonObject.optString("nomb_encta"));
                         encuestass.add(encuestas);
