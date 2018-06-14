@@ -2,11 +2,13 @@ package com.example.asus.movilgps.activities;
 
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.graphics.Color;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.volley.Request;
@@ -36,12 +38,13 @@ public class RespuestaActivity extends AppCompatActivity implements Response.Lis
     ArrayList<Respuesta> respuestas;
     private RespuestaAdapte adapter;
     ListView listView;
+    TextView pregunta;
 
     RequestQueue request;
     JsonObjectRequest jsonObjectRequest;
     StringRequest stringRequest;
 
-    private String idEvento;
+     String idEvento,nomPre;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,13 +54,16 @@ public class RespuestaActivity extends AppCompatActivity implements Response.Lis
         request = Volley.newRequestQueue(getApplicationContext());
         context = RespuestaActivity.this;
         listView = findViewById(R.id.listViewRespuestas);
+        pregunta = findViewById(R.id.textView_nomPregunta);
         respuestas = new ArrayList<>();
 
         String idPregunta = getIntent().getStringExtra("id_pre");
         idEvento = getIntent().getStringExtra("id_evento");
+        nomPre = getIntent().getStringExtra("pregunta");
         cargarWebService(idPregunta);
-    }
+        this.setTitle(nomPre);
 
+    }
     private void cargarWebService(String idPregunta) {
         progreso= new ProgressDialog(context);
         progreso.setMessage("Cargando respuestas..");

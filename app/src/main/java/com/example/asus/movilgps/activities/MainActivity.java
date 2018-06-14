@@ -43,6 +43,7 @@ import com.android.volley.toolbox.Volley;
 import com.example.asus.movilgps.R;
 import com.example.asus.movilgps.Utilidades.Utilidades_Request;
 import com.example.asus.movilgps.models.Encuestas;
+import com.example.asus.movilgps.models.validate;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -75,6 +76,7 @@ public class MainActivity extends AppCompatActivity {
 
     ArrayList<String> listaEventos;
     ArrayList<Encuestas> encuestass;
+    ArrayList<validate> validates;
     ArrayAdapter<CharSequence> adapter;
 
     @Override
@@ -176,19 +178,53 @@ public class MainActivity extends AppCompatActivity {
                // Toast.makeText(getApplicationContext(), response.toString(), Toast.LENGTH_SHORT).show();
                 btnEnvio.setEnabled(true);
                  Encuestas encuestas = null;
+                 validate validate = null;
+
                 JSONArray json = response.optJSONArray("encuesta");
 
                 try {
-                    for (int i = 0; i < json.length(); i++) {
+                    if(encuestass.size() == 0){
+                        for (int i = 0; i < json.length(); i++) {
 
-                        encuestas = new Encuestas();
-                        JSONObject jsonObject = null;
-                        jsonObject = json.getJSONObject(i);
+                            encuestas = new Encuestas();
+                            JSONObject jsonObject = null;
+                            jsonObject = json.getJSONObject(i);
 
-                        encuestas.setId_encuesta(jsonObject.optInt("id_encuesta"));
-                        encuestas.setNombre_encuesta(jsonObject.optString("nomb_encta"));
-                        encuestass.add(encuestas);
+                            encuestas.setId_encuesta(jsonObject.optInt("id_encuesta"));
+                            encuestas.setNombre_encuesta(jsonObject.optString("nomb_encta"));
+                            encuestass.add(encuestas);
+                        }
+                    }else{
+                        validates = new ArrayList<>();
+                        for (int i = 0; i < json.length(); i++) {
+
+                            validate = new validate();
+                            JSONObject jsonObject = null;
+                            jsonObject = json.getJSONObject(i);
+
+                            validate.setId(jsonObject.optInt("id_encuesta"));
+                            validate.setNombre(jsonObject.optString("nomb_encta"));
+                            validates.add(validate);
+                        }
+                        Toast.makeText(getApplicationContext(), "Listo validate ", Toast.LENGTH_SHORT).show();
+                        if(validates.size()!=encuestass.size()){
+                            if(validates.size()>encuestass.size()){
+                                int numero_agregar= validates.size()-encuestass.size();
+                                int numero_encuestas= encuestass.size();
+
+                                Toast.makeText(getApplicationContext(), "faltan  "+ String.valueOf(numero_agregar)+ " por agregar.", Toast.LENGTH_SHORT).show();
+                                for (int i=0; i<numero_agregar; i++){
+                                    //Toast.makeText(getApplicationContext(), "Hay que agregar el s: "+ validates.get(numero_encuestas+i).getId().toString() + " - " + validates.get(numero_encuestas+i).getNombre(), Toast.LENGTH_SHORT).show();
+                                    encuestas = new Encuestas();
+                                    encuestas.setId_encuesta(validates.get(numero_encuestas+i).getId());
+                                    encuestas.setNombre_encuesta(validates.get(numero_encuestas+i).getNombre());
+                                    encuestass.add(encuestas);
+                                }
+                            }
+
+                        }
                     }
+
                     obtenerList();
 
                 }catch (JSONException e) {
@@ -209,12 +245,10 @@ public class MainActivity extends AppCompatActivity {
 
     private void obtenerList() {
         listaEventos = new ArrayList<String>();
+
         listaEventos.add("Seleccione tipo encuesta");
-        for(int i=0; i<encuestass.size(); i++){
-            if(listaEventos.get(i).equals(encuestass.get(i).getId_encuesta())){
-                Toast.makeText(context,"repetidos", Toast.LENGTH_SHORT).show();
-            }
-            listaEventos.add(encuestass.get(i).getId_encuesta()+" - "+ encuestass.get(i).getNombre_encuesta());
+        for(int i=0; i<encuestass.size(); i++) {
+            listaEventos.add(encuestass.get(i).getId_encuesta() + " - " + encuestass.get(i).getNombre_encuesta());
         }
 
         adapter= new ArrayAdapter(this,android.R.layout.simple_spinner_item,listaEventos);
@@ -384,7 +418,8 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()){
             case R.id.upload:
-                startActivity(getIntent());
+                cargarwebservice();
+                // startActivity(getIntent());
                 break;
         }
         return super.onOptionsItemSelected(item);

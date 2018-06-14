@@ -161,6 +161,8 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
             progreso.hide();
 
             adapter  = new PreguntaAdapte(this, preguntas, R.layout.list_view_pregunta_item);
+            Toast.makeText(context, adapter.toString(), Toast.LENGTH_SHORT).show();
+
             listView.setAdapter(adapter);
             listView.setOnItemClickListener(this);
             //envio getContext
@@ -185,10 +187,12 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         String id_pre = String.valueOf(preguntas.get(position).getId_pre());
+        String pregunta = String.valueOf(preguntas.get(position).getNombre_pre());
 
         Intent intent = new Intent(PreguntasActivity.this, RespuestaActivity.class);
         intent.putExtra("id_pre", id_pre);
         intent.putExtra("id_evento", Evento);
+        intent.putExtra("pregunta", pregunta);
         startActivity(intent);
     }
 }
