@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -91,6 +92,7 @@ public class MainActivity extends AppCompatActivity {
         context = MainActivity.this;
         encuestass= new ArrayList<>();
         request = Volley.newRequestQueue(getApplicationContext());
+        btnEnvio.setEnabled(false);
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
@@ -178,14 +180,11 @@ public class MainActivity extends AppCompatActivity {
 
                 try {
                     for (int i = 0; i < json.length(); i++) {
-                        for(int o=0; o< encuestass.size(); o++){
 
-                            Toast.makeText(context, "nn "+String.valueOf(o), Toast.LENGTH_SHORT).show();
-                        }
                         encuestas = new Encuestas();
                         JSONObject jsonObject = null;
-
                         jsonObject = json.getJSONObject(i);
+
                         encuestas.setId_encuesta(jsonObject.optInt("id_encuesta"));
                         encuestas.setNombre_encuesta(jsonObject.optString("nomb_encta"));
                         encuestass.add(encuestas);
