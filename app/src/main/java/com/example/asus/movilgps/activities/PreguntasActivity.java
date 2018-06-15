@@ -1,14 +1,21 @@
 package com.example.asus.movilgps.activities;
 
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 import com.android.volley.AuthFailureError;
@@ -22,7 +29,10 @@ import com.android.volley.toolbox.Volley;
 import com.example.asus.movilgps.R;
 import com.example.asus.movilgps.Utilidades.Utilidades_Request;
 import com.example.asus.movilgps.adapters.PreguntaAdapte;
+import com.example.asus.movilgps.models.Encuestas;
 import com.example.asus.movilgps.models.Pregunta;
+import com.example.asus.movilgps.models.Respuesta;
+import com.example.asus.movilgps.models.validate;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -39,9 +49,15 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
     Context context;
    // ArrayList<Encuestas> encuestass;
    ArrayList<Pregunta> preguntas;
+   ArrayList<Respuesta> respuestas;
+   ArrayList<validate> validates;
+    ArrayList<String> listaRespuestas;
    private PreguntaAdapte adapter;
+
    ListView listView;
    private String Evento;
+   private String idEncuesta;
+   Spinner spinnerPreguntas;
 
 
     RequestQueue request;
@@ -57,10 +73,12 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
         context = PreguntasActivity.this;
         listView = findViewById(R.id.listViewPreguntas);
         preguntas = new ArrayList<>();
+        respuestas = new ArrayList<>();
+        spinnerPreguntas = findViewById(R.id.spinnerSeleRespuesta);
 
         String Latitude = getIntent().getStringExtra("latitud");
         String Longitude = getIntent().getStringExtra("longitud");
-        String idEncuesta = getIntent().getStringExtra("idEncuesta");
+        idEncuesta = getIntent().getStringExtra("idEncuesta");
 
         cargarWebService(Latitude, Longitude, idEncuesta);
 
@@ -138,30 +156,65 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
     public void onResponse(JSONObject response) {
         progreso.dismiss();
         Pregunta pregunta = null;
+        validate validate = null;
 
 
         JSONArray json = response.optJSONArray("pregunta");
 
         try {
-            for(int i=0;i<json.length(); i++){
-                pregunta = new Pregunta();
-                JSONObject jsonObject = null;
+            if(preguntas.size() == 0){
+                for(int i=0;i<json.length(); i++){
+                    pregunta = new Pregunta();
+                    JSONObject jsonObject = null;
 
-                jsonObject = json.getJSONObject(i);
-                if(jsonObject.optInt("id_pgta")==0){
-                    Toast.makeText(getApplicationContext(),"no existe en la bd" , Toast.LENGTH_SHORT).show();
-                }else{
-                    pregunta.setId_pre(jsonObject.optInt("id_pgta"));
-                    pregunta.setNombre_pre(jsonObject.optString("nomb_pgta"));
-                    pregunta.setTipo_pre(jsonObject.optInt("tipo_pregunta"));
-                    preguntas.add(pregunta);
+                    jsonObject = json.getJSONObject(i);
+                    if(jsonObject.optInt("id_pgta")==0){
+                        Toast.makeText(getApplicationContext(),"no existe en la bd" , Toast.LENGTH_SHORT).show();
+                    }else{
+                        pregunta.setId_pre(jsonObject.optInt("id_pgta"));
+                        pregunta.setNombre_pre(jsonObject.optString("nomb_pgta"));
+                        pregunta.setTipo_pre(jsonObject.optInt("tipo_pregunta"));
+                        preguntas.add(pregunta);
+                    }
+                }
+            }else {
+                validates = new ArrayList<>();
+                for (int i = 0; i < json.length(); i++) {
+
+                    validate = new validate();
+                    JSONObject jsonObject = null;
+                    jsonObject = json.getJSONObject(i);
+
+                    validate.setId(jsonObject.optInt("id_pgta"));
+                    validate.setNombre(jsonObject.optString("nomb_pgta"));
+                    validate.setTipo(jsonObject.optInt("tipo_pregunta"));
+                    validates.add(validate);
+                }
+
+                Toast.makeText(getApplicationContext(), "Listo validate ", Toast.LENGTH_SHORT).show();
+                if (validates.size() != preguntas.size()) {
+                    if (validates.size() > preguntas.size()) {
+                        int numero_agregar = validates.size() - preguntas.size();
+                        int numero_preguntas = preguntas.size();
+
+                        Toast.makeText(getApplicationContext(), "faltan  " + String.valueOf(numero_agregar) + " por agregar.", Toast.LENGTH_SHORT).show();
+                        for (int i = 0; i < numero_agregar; i++) {
+                            //Toast.makeText(getApplicationContext(), "Hay que agregar el s: "+ validates.get(numero_encuestas+i).getId().toString() + " - " + validates.get(numero_encuestas+i).getNombre(), Toast.LENGTH_SHORT).show();
+                            pregunta = new Pregunta();
+                            pregunta.setId_pre(validates.get(numero_preguntas + i).getId());
+                            pregunta.setNombre_pre(validates.get(numero_preguntas + i).getNombre());
+                            pregunta.setTipo_pre(validates.get(numero_preguntas + i).getTipo());
+                            preguntas.add(pregunta);
+                        }
+                    }
 
                 }
             }
+
             progreso.hide();
 
             adapter  = new PreguntaAdapte(this, preguntas, R.layout.list_view_pregunta_item);
-            Toast.makeText(context, adapter.toString(), Toast.LENGTH_SHORT).show();
+            //Toast.makeText(context, adapter.toString(), Toast.LENGTH_SHORT).show();
 
             listView.setAdapter(adapter);
             listView.setOnItemClickListener(this);
@@ -189,10 +242,98 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
         String id_pre = String.valueOf(preguntas.get(position).getId_pre());
         String pregunta = String.valueOf(preguntas.get(position).getNombre_pre());
 
-        Intent intent = new Intent(PreguntasActivity.this, RespuestaActivity.class);
-        intent.putExtra("id_pre", id_pre);
-        intent.putExtra("id_evento", Evento);
-        intent.putExtra("pregunta", pregunta);
-        startActivity(intent);
+        showAlertSpinnerRespuestas("Seleccione una respuesta", id_pre);
+    }
+
+    private void showAlertSpinnerRespuestas(String title, String id_pre) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        if (title != null) builder.setTitle(title);
+
+        View viewInflated = LayoutInflater.from(this).inflate(R.layout.dialog_spinner_respuestas, null);
+        builder.setView(viewInflated);
+        cargarWebServiceRespuestas(id_pre);
+
+
+        builder.setPositiveButton("Add", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+            }
+
+        });
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+    private void cargarWebServiceRespuestas(String id_pre) {
+        String url = Utilidades_Request.HTTP + Utilidades_Request.IP + Utilidades_Request.CARPETA + "wsJSONConsultaRespuestas.php?id_pregunta="+id_pre;
+
+        jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+                // Toast.makeText(getApplicationContext(), response.toString(), Toast.LENGTH_SHORT).show();
+                Respuesta respuesta = null;
+
+                JSONArray json = response.optJSONArray("respuesta");
+
+                try {
+
+                        for (int i = 0; i < json.length(); i++) {
+
+                            respuesta = new Respuesta();
+                            JSONObject jsonObject = null;
+                            jsonObject = json.getJSONObject(i);
+
+                            respuesta.setId_resp(jsonObject.optInt("id_rpta"));
+                            respuesta.setNombre_resp(jsonObject.optString("nomb_rpta"));
+                            respuestas.add(respuesta);
+                        }
+
+                        obtenerlistRespuesta();
+
+                }catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+
+                Toast.makeText(context, "Error webservice. \n"+
+                        "No hay conexion con la base de datos.", Toast.LENGTH_SHORT).show();
+            }
+        });
+        request.add(jsonObjectRequest);
+    }
+
+    private void obtenerlistRespuesta() {
+        listaRespuestas = new ArrayList<String>();
+
+        listaRespuestas.add("Seleccione una respuesta");
+        for(int i=0; i<respuestas.size(); i++) {
+            listaRespuestas.add(respuestas.get(i).getId_resp() + " - " + respuestas.get(i).getNombre_resp());
+        }
+
+        ArrayAdapter<CharSequence> adapter =  new ArrayAdapter
+                (this,android.R.layout.simple_spinner_item,listaRespuestas);
+        spinnerPreguntas.setAdapter(adapter);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_activity, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()){
+            case R.id.upload:
+                cargarWebServicePreguntas(idEncuesta);
+                // startActivity(getIntent());
+                break;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }

@@ -221,7 +221,6 @@ public class MainActivity extends AppCompatActivity {
                                     encuestass.add(encuestas);
                                 }
                             }
-
                         }
                     }
 
