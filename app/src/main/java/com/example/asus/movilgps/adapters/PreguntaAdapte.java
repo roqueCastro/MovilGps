@@ -58,9 +58,9 @@ public class PreguntaAdapte extends BaseAdapter {
         } else {
             vh = (ViewHolder) convertView.getTag();
         }
+
         Pregunta pregunta = list.get(position);
         vh.nombrePregunta.setText(pregunta.getNombre_pre());
-
 
         return convertView;
     }

@@ -83,16 +83,6 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
 
         cargarWebService(Latitude, Longitude, idEncuesta);
 
-        /*progreso = new ProgressDialog(context);
-        progreso.setTitle("Enviando coordenadas");
-        progreso.show();
-
-        new android.os.Handler().postDelayed(
-                new Runnable() {
-                    public void run() {
-                        progreso.dismiss();
-                    }
-                }, 3000);*/
     }
 
     private void cargarWebService(final String latitude, final String longitude, final String idEncuesta) {
@@ -178,6 +168,7 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
                         pregunta.setId_pre(jsonObject.optInt("id_pgta"));
                         pregunta.setNombre_pre(jsonObject.optString("nomb_pgta"));
                         pregunta.setTipo_pre(jsonObject.optInt("tipo_pregunta"));
+                        pregunta.setEstado(0);
                         preguntas.add(pregunta);
                     }
                 }
@@ -208,6 +199,7 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
                             pregunta.setId_pre(validates.get(numero_preguntas + i).getId());
                             pregunta.setNombre_pre(validates.get(numero_preguntas + i).getNombre());
                             pregunta.setTipo_pre(validates.get(numero_preguntas + i).getTipo());
+                            pregunta.setEstado(0);
                             preguntas.add(pregunta);
                         }
                     }
@@ -374,7 +366,7 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
         spinnerPreguntas.setAdapter(adapter);
     }
 
-    @Override
+    /*@Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_activity, menu);
         return super.onCreateOptionsMenu(menu);
@@ -389,5 +381,5 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
                 break;
         }
         return super.onOptionsItemSelected(item);
-    }
+    }*/
 }

@@ -39,7 +39,6 @@
         <activity android:name=".activities.PreguntasActivity" />
         <activity android:name=".activities.MainActivity" />
         <activity android:name=".activities.MensajeTextoActivity" />
-        <activity android:name=".activities.RespuestaActivity"></activity>
     </application>
 
 </manifest>

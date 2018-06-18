@@ -8,6 +8,7 @@ public class Pregunta {
     private  Integer id_pre;
     private  String nombre_pre;
     private  Integer tipo_pre;
+    private Integer estado;
 
     public Integer getId_pre() {
         return id_pre;
@@ -31,5 +32,13 @@ public class Pregunta {
 
     public void setTipo_pre(Integer tipo_pre) {
         this.tipo_pre = tipo_pre;
+    }
+
+    public Integer getEstado() {
+        return estado;
+    }
+
+    public void setEstado(Integer estado) {
+        this.estado = estado;
     }
 }

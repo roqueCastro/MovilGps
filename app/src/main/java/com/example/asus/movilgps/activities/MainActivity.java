@@ -197,13 +197,16 @@ public class MainActivity extends AppCompatActivity {
                             validate.setNombre(jsonObject.optString("nomb_encta"));
                             validates.add(validate);
                         }
-                        Toast.makeText(getApplicationContext(), "Listo validate ", Toast.LENGTH_SHORT).show();
+
                         if(validates.size()!=encuestass.size()){
                             if(validates.size()>encuestass.size()){
                                 int numero_agregar= validates.size()-encuestass.size();
                                 int numero_encuestas= encuestass.size();
 
-                                Toast.makeText(getApplicationContext(), "faltan  "+ String.valueOf(numero_agregar)+ " por agregar.", Toast.LENGTH_SHORT).show();
+                                progreso = new ProgressDialog(context);
+                                progreso.setMessage("Agregando datos...");
+                                progreso.show();
+
                                 for (int i=0; i<numero_agregar; i++){
                                     //Toast.makeText(getApplicationContext(), "Hay que agregar el s: "+ validates.get(numero_encuestas+i).getId().toString() + " - " + validates.get(numero_encuestas+i).getNombre(), Toast.LENGTH_SHORT).show();
                                     encuestas = new Encuestas();
@@ -211,6 +214,8 @@ public class MainActivity extends AppCompatActivity {
                                     encuestas.setNombre_encuesta(validates.get(numero_encuestas+i).getNombre());
                                     encuestass.add(encuestas);
                                 }
+                                progreso.dismiss();
+                                Toast.makeText(getApplicationContext(), "Se agregaron  "+ String.valueOf(numero_agregar)+ " encuestas.", Toast.LENGTH_SHORT).show();
                             }
                         }
                     }
