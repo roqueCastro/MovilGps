@@ -167,6 +167,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onResponse(JSONObject response) {
                // Toast.makeText(getApplicationContext(), response.toString(), Toast.LENGTH_SHORT).show();
+
                 btnEnvio.setEnabled(true);
                  Encuestas encuestas = null;
                  validate validate = null;

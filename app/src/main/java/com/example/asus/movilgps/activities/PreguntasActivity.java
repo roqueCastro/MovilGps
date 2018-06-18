@@ -172,7 +172,7 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
                         preguntas.add(pregunta);
                     }
                 }
-            }else {
+            }/*else {
                 validates = new ArrayList<>();
                 for (int i = 0; i < json.length(); i++) {
 
@@ -205,7 +205,7 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
                     }
 
                 }
-            }
+            }*/
 
             progreso.hide();
 
@@ -214,17 +214,12 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
 
             listView.setAdapter(adapter);
             listView.setOnItemClickListener(this);
-            //envio getContext
-
-            //recyclerUser.setAdapter(adapter);
 
         } catch (JSONException e) {
             e.printStackTrace();
             Toast.makeText(getApplicationContext(),"No se a podido tener conexion con el servidor " , Toast.LENGTH_SHORT).show();
             progreso.hide();
-
         }
-
     }
 
     @Override
@@ -233,15 +228,7 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
 
     }
 
-    @Override
-    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        String id_pre = String.valueOf(preguntas.get(position).getId_pre());
-        String pregunta = String.valueOf(preguntas.get(position).getNombre_pre());
-
-        showAlertSpinnerRespuestas(pregunta, id_pre);
-    }
-
-    private void showAlertSpinnerRespuestas(String title, String id_pre) {
+    private void showAlertSpinnerRespuestas(String title, String id_pre, final int position) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
         if (title != null) builder.setTitle(title);
@@ -258,7 +245,7 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
                 int selec = spinnerPreguntas.getSelectedItemPosition();
                 if(selec  != 0){
                     String idRespuesta = String.valueOf(respuestas.get(selec-1).getId_resp());
-                    cargarWebServiceRegistroResultado(idRespuesta,idEvento);
+                    cargarWebServiceRegistroResultado(idRespuesta,idEvento, position);
                 }else{
                     Toast.makeText(getApplicationContext(), "Debes seleccionar una respuesta.!!", Toast.LENGTH_SHORT).show();
                 }
@@ -270,7 +257,7 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
         dialog.show();
     }
 
-    private void cargarWebServiceRegistroResultado(final String idRespuesta, final String idEvento) {
+    private void cargarWebServiceRegistroResultado(final String idRespuesta, final String idEvento, final int position) {
         progreso= new ProgressDialog(context);
         progreso.setMessage("Registrando respuesta..");
         progreso.show();
@@ -287,7 +274,15 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
                     Toast.makeText(context,"No registro ocurrio un error ", Toast.LENGTH_SHORT).show();
 
                 }else{
-                    Toast.makeText(context,"Registro Exitoso "+response.toString(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context,"Registro Exitoso. ", Toast.LENGTH_SHORT).show();
+                    preguntas.remove(position);
+
+                    if(preguntas.size()==0){
+                        Intent intent = new Intent(PreguntasActivity.this, UltimaActivity.class);
+                        startActivity(intent);
+                    }else{
+                        cargarWebServicePreguntas(idEncuesta);
+                    }
                 }
             }
         }, new Response.ErrorListener() {
@@ -366,20 +361,11 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
         spinnerPreguntas.setAdapter(adapter);
     }
 
-    /*@Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_activity, menu);
-        return super.onCreateOptionsMenu(menu);
-    }
-
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()){
-            case R.id.upload:
-                cargarWebServicePreguntas(idEncuesta);
-                // startActivity(getIntent());
-                break;
-        }
-        return super.onOptionsItemSelected(item);
-    }*/
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        String id_pre = String.valueOf(preguntas.get(position).getId_pre());
+        String pregunta = String.valueOf(preguntas.get(position).getNombre_pre());
+
+        showAlertSpinnerRespuestas(pregunta, id_pre, position);
+    }
 }
