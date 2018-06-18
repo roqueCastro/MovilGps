@@ -55,14 +55,17 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
    private PreguntaAdapte adapter;
 
    ListView listView;
-   private String Evento;
+   private String idEvento;
    private String idEncuesta;
+   private String resultado = "";
    Spinner spinnerPreguntas;
 
 
     RequestQueue request;
     JsonObjectRequest jsonObjectRequest;
     StringRequest stringRequest;
+
+    AlertDialog dialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,8 +76,6 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
         context = PreguntasActivity.this;
         listView = findViewById(R.id.listViewPreguntas);
         preguntas = new ArrayList<>();
-        respuestas = new ArrayList<>();
-        spinnerPreguntas = findViewById(R.id.spinnerSeleRespuesta);
 
         String Latitude = getIntent().getStringExtra("latitud");
         String Longitude = getIntent().getStringExtra("longitud");
@@ -115,7 +116,7 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
 
                 }else{
                     Toast.makeText(context,"Registro Exitoso "+response.toString(), Toast.LENGTH_SHORT).show();
-                    Evento= response.toString();
+                    idEvento= response.toString();
                     cargarWebServicePreguntas(idEncuesta);
                 }
             }
@@ -125,6 +126,8 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
                 progreso.hide();
                 Toast.makeText(context,"Ocurrio un error en el servidor " + error.toString(), Toast.LENGTH_SHORT).show();
                 Log.i("Error", error.toString());
+                Intent intent = new Intent(PreguntasActivity.this, MainActivity.class);
+                startActivity(intent);
             }
         }){
             @Override
@@ -170,6 +173,7 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
                     jsonObject = json.getJSONObject(i);
                     if(jsonObject.optInt("id_pgta")==0){
                         Toast.makeText(getApplicationContext(),"no existe en la bd" , Toast.LENGTH_SHORT).show();
+
                     }else{
                         pregunta.setId_pre(jsonObject.optInt("id_pgta"));
                         pregunta.setNombre_pre(jsonObject.optString("nomb_pgta"));
@@ -242,7 +246,7 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
         String id_pre = String.valueOf(preguntas.get(position).getId_pre());
         String pregunta = String.valueOf(preguntas.get(position).getNombre_pre());
 
-        showAlertSpinnerRespuestas("Seleccione una respuesta", id_pre);
+        showAlertSpinnerRespuestas(pregunta, id_pre);
     }
 
     private void showAlertSpinnerRespuestas(String title, String id_pre) {
@@ -253,17 +257,66 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
         View viewInflated = LayoutInflater.from(this).inflate(R.layout.dialog_spinner_respuestas, null);
         builder.setView(viewInflated);
         cargarWebServiceRespuestas(id_pre);
+        spinnerPreguntas = viewInflated.findViewById(R.id.spinnerSeleRespuesta);
 
 
-        builder.setPositiveButton("Add", new DialogInterface.OnClickListener() {
+        builder.setPositiveButton("Enviar", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
+                int selec = spinnerPreguntas.getSelectedItemPosition();
+                if(selec  != 0){
+                    String idRespuesta = String.valueOf(respuestas.get(selec-1).getId_resp());
+                    cargarWebServiceRegistroResultado(idRespuesta,idEvento);
+                }else{
+                    Toast.makeText(getApplicationContext(), "Debes seleccionar una respuesta.!!", Toast.LENGTH_SHORT).show();
+                }
             }
 
         });
 
-        AlertDialog dialog = builder.create();
+        dialog = builder.create();
         dialog.show();
+    }
+
+    private void cargarWebServiceRegistroResultado(final String idRespuesta, final String idEvento) {
+        progreso= new ProgressDialog(context);
+        progreso.setMessage("Registrando respuesta..");
+        progreso.show();
+
+        String url = Utilidades_Request.HTTP+Utilidades_Request.IP+Utilidades_Request.CARPETA+"wsJSONRegistroResultado.php?";
+
+        stringRequest = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                progreso.hide();
+
+
+                if(response.trim().equalsIgnoreCase("Noregistra")){
+                    Toast.makeText(context,"No registro ocurrio un error ", Toast.LENGTH_SHORT).show();
+
+                }else{
+                    Toast.makeText(context,"Registro Exitoso "+response.toString(), Toast.LENGTH_SHORT).show();
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                progreso.hide();
+                Toast.makeText(context,"Ocurrio un error en el servidor " + error.toString(), Toast.LENGTH_SHORT).show();
+                Log.i("Error", error.toString());
+            }
+        }){
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+
+                Map<String,String> paramentros = new HashMap<>();
+                paramentros.put("idEvento", idEvento);
+                paramentros.put("resultado",resultado);
+                paramentros.put("idRespuesta",idRespuesta);
+                return paramentros;
+            }
+        };
+        request.add(stringRequest);
     }
 
     private void cargarWebServiceRespuestas(String id_pre) {
@@ -273,6 +326,7 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
             @Override
             public void onResponse(JSONObject response) {
                 // Toast.makeText(getApplicationContext(), response.toString(), Toast.LENGTH_SHORT).show();
+                respuestas = new ArrayList<>();
                 Respuesta respuesta = null;
 
                 JSONArray json = response.optJSONArray("respuesta");
@@ -312,7 +366,7 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
 
         listaRespuestas.add("Seleccione una respuesta");
         for(int i=0; i<respuestas.size(); i++) {
-            listaRespuestas.add(respuestas.get(i).getId_resp() + " - " + respuestas.get(i).getNombre_resp());
+            listaRespuestas.add(/*respuestas.get(i).getId_resp() + " - " + */respuestas.get(i).getNombre_resp());
         }
 
         ArrayAdapter<CharSequence> adapter =  new ArrayAdapter
