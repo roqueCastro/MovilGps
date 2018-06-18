@@ -118,21 +118,16 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 locationStart();
 
-                String selec=spinner.getSelectedItem().toString();
-                if(selec!="0.1"){
-                    String[] split = selec.split("-");
-                    String b= split[0];
-
-                    if(b  != "Seleccione tipo encuesta"){
+                final int selec=spinner.getSelectedItemPosition();
+                if(selec!= 0){
                         progreso = new ProgressDialog(context);
                         progreso.setMessage("Cargando coordenadas..");
                         progreso.show();
                         new android.os.Handler().postDelayed(
                                 new Runnable() {
                                     public void run() {
-                                        String selec=spinner.getSelectedItem().toString();
-                                        String[] split = selec.split("-");
-                                        String b= split[0];
+
+                                        String idEncuesta = encuestass.get(selec-1).getId_encuesta().toString();
                                         String lat = latitude.getText().toString();
                                         String lon = longitude.getText().toString();
 
@@ -140,7 +135,7 @@ public class MainActivity extends AppCompatActivity {
                                         Intent i = new Intent(MainActivity.this, PreguntasActivity.class);
                                         i.putExtra("latitud", lat);
                                         i.putExtra("longitud", lon);
-                                        i.putExtra("idEncuesta", b);
+                                        i.putExtra("idEncuesta", idEncuesta);
                                         startActivity(i);
 
                                         progreso.dismiss();
@@ -150,10 +145,6 @@ public class MainActivity extends AppCompatActivity {
                         Toast.makeText(context, "Tienes que seleccionar un evento", Toast.LENGTH_SHORT).show();
                         spinner.setFocusable(true);
                     }
-                }else{
-                    Toast.makeText(context, "No tienes conexion con la base de datos", Toast.LENGTH_SHORT).show();
-
-                }
             }
         });
 
@@ -247,7 +238,7 @@ public class MainActivity extends AppCompatActivity {
 
         listaEventos.add("Seleccione tipo encuesta");
         for(int i=0; i<encuestass.size(); i++) {
-            listaEventos.add(encuestass.get(i).getId_encuesta() + " - " + encuestass.get(i).getNombre_encuesta());
+            listaEventos.add(/*encuestass.get(i).getId_encuesta() + " - " +*/ encuestass.get(i).getNombre_encuesta());
         }
 
         adapter= new ArrayAdapter(this,android.R.layout.simple_spinner_item,listaEventos);
