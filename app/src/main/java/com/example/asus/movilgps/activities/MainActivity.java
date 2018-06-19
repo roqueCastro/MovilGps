@@ -137,6 +137,7 @@ public class MainActivity extends AppCompatActivity {
                                         i.putExtra("longitud", lon);
                                         i.putExtra("idEncuesta", idEncuesta);
                                         startActivity(i);
+                                        finish();
 
                                         progreso.dismiss();
                                     }
@@ -312,9 +313,9 @@ public class MainActivity extends AppCompatActivity {
     public class Localizacion implements LocationListener {
         MainActivity mainActivity;
 
-        public MainActivity getMainActivity() {
+        /*public MainActivity getMainActivity() {
             return mainActivity;
-        }
+        }*/
 
         public void setMainActivity(MainActivity mainActivity) {
             this.mainActivity = mainActivity;

@@ -1,12 +1,20 @@
 package com.example.asus.movilgps.activities;
 
+import android.annotation.TargetApi;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.icu.lang.UCharacter;
+import android.os.Build;
+import android.renderscript.ScriptGroup;
+import android.support.annotation.RequiresApi;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.telephony.PhoneNumberFormattingTextWatcher;
+import android.text.method.PasswordTransformationMethod;
+import android.text.method.TransformationMethod;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -14,6 +22,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.Toast;
@@ -38,9 +47,12 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+
+import static android.icu.lang.UCharacter.NumericType.NUMERIC;
 
 public class PreguntasActivity extends AppCompatActivity implements Response.Listener<JSONObject>,
         Response.ErrorListener, AdapterView.OnItemClickListener{
@@ -105,7 +117,7 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
                     startActivity(intent);
 
                 }else{
-                    Toast.makeText(context,"Registro Exitoso "+response.toString(), Toast.LENGTH_SHORT).show();
+                   // Toast.makeText(context,"Registro Exitoso "+response.toString(), Toast.LENGTH_SHORT).show();
                     idEvento= response.toString();
                     cargarWebServicePreguntas(idEncuesta);
                 }
@@ -228,6 +240,7 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
 
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.N)
     private void showAlertSpinnerRespuestas(String title, String id_pre, final int position) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
@@ -235,19 +248,48 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
 
         View viewInflated = LayoutInflater.from(this).inflate(R.layout.dialog_spinner_respuestas, null);
         builder.setView(viewInflated);
-        cargarWebServiceRespuestas(id_pre);
+
         spinnerPreguntas = viewInflated.findViewById(R.id.spinnerSeleRespuesta);
+        final EditText EditRespuesta = (EditText)viewInflated.findViewById(R.id.editTextRespuesta);
+
+        EditRespuesta.setVisibility(View.INVISIBLE);
+        spinnerPreguntas.setVisibility(View.INVISIBLE);
+
+        final int tipo =  preguntas.get(position).getTipo_pre();
+        if(tipo==1){
+            spinnerPreguntas.setVisibility(View.VISIBLE);
+            EditRespuesta.setVisibility(View.VISIBLE);
+            EditRespuesta.setInputType(NUMERIC);
+            cargarWebServiceRespuestas(id_pre);
+        }else{
+            spinnerPreguntas.setVisibility(View.VISIBLE);
+            cargarWebServiceRespuestas(id_pre);
+        }
 
 
         builder.setPositiveButton("Enviar", new DialogInterface.OnClickListener() {
+            @TargetApi(Build.VERSION_CODES.N)
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                int selec = spinnerPreguntas.getSelectedItemPosition();
-                if(selec  != 0){
-                    String idRespuesta = String.valueOf(respuestas.get(selec-1).getId_resp());
-                    cargarWebServiceRegistroResultado(idRespuesta,idEvento, position);
+                if(tipo==1){
+                    if(EditRespuesta.getText().toString().equals("")){
+                        Toast.makeText(getApplicationContext(), "Ingresa en el campo!!", Toast.LENGTH_SHORT).show();
+                    }else if (spinnerPreguntas.getSelectedItemPosition()==0) {
+                        Toast.makeText(getApplicationContext(), "Seleccione la respuesta a enviar ", Toast.LENGTH_SHORT).show();
+                    }else{
+                        int selec = spinnerPreguntas.getSelectedItemPosition();
+                        String idRespuesta = String.valueOf(respuestas.get(selec-1).getId_resp());
+                        resultado=EditRespuesta.getText().toString();
+                        cargarWebServiceRegistroResultado(idRespuesta,idEvento, position);
+                    }
                 }else{
-                    Toast.makeText(getApplicationContext(), "Debes seleccionar una respuesta.!!", Toast.LENGTH_SHORT).show();
+                    int selec = spinnerPreguntas.getSelectedItemPosition();
+                    if(selec  != 0){
+                        String idRespuesta = String.valueOf(respuestas.get(selec-1).getId_resp());
+                        cargarWebServiceRegistroResultado(idRespuesta,idEvento, position);
+                    }else{
+                        Toast.makeText(getApplicationContext(), "Debes seleccionar una respuesta.!!", Toast.LENGTH_SHORT).show();
+                    }
                 }
             }
 
@@ -280,6 +322,7 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
                     if(preguntas.size()==0){
                         Intent intent = new Intent(PreguntasActivity.this, UltimaActivity.class);
                         startActivity(intent);
+                        finish();
                     }else{
                         cargarWebServicePreguntas(idEncuesta);
                     }
@@ -326,9 +369,12 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
                             JSONObject jsonObject = null;
                             jsonObject = json.getJSONObject(i);
 
-                            respuesta.setId_resp(jsonObject.optInt("id_rpta"));
-                            respuesta.setNombre_resp(jsonObject.optString("nomb_rpta"));
-                            respuestas.add(respuesta);
+                            if(jsonObject.optInt("id_rpta")!=0){
+                                respuesta.setId_resp(jsonObject.optInt("id_rpta"));
+                                respuesta.setNombre_resp(jsonObject.optString("nomb_rpta"));
+                                respuestas.add(respuesta);
+                            }
+
                         }
 
                         obtenerlistRespuesta();
@@ -361,6 +407,8 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
         spinnerPreguntas.setAdapter(adapter);
     }
 
+    @TargetApi(Build.VERSION_CODES.N)
+    @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         String id_pre = String.valueOf(preguntas.get(position).getId_pre());

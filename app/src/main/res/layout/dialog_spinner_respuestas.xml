@@ -11,7 +11,12 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="20dp"
-
+        />
+    <EditText
+        android:id="@+id/editTextRespuesta"
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
         />
 
 </LinearLayout>
