@@ -9,7 +9,7 @@ import android.content.Intent;
 public class Respuesta {
     private Integer id_resp;
     private String nombre_resp;
-
+    private String tipo_pregunta;
 
     public Integer getId_resp() {
         return id_resp;
@@ -25,5 +25,13 @@ public class Respuesta {
 
     public void setNombre_resp(String nombre_resp) {
         this.nombre_resp = nombre_resp;
+    }
+
+    public String getTipo_pregunta() {
+        return tipo_pregunta;
+    }
+
+    public void setTipo_pregunta(String tipo_pregunta) {
+        this.tipo_pregunta = tipo_pregunta;
     }
 }

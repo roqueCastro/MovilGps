@@ -25,6 +25,7 @@ import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.volley.AuthFailureError;
@@ -63,14 +64,17 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
    ArrayList<Pregunta> preguntas;
    ArrayList<Respuesta> respuestas;
    ArrayList<validate> validates;
-    ArrayList<String> listaRespuestas;
+   ArrayList<String> listaRespuestas;
    private PreguntaAdapte adapter;
 
    ListView listView;
    private String idEvento;
    private String idEncuesta;
    private String resultado = "";
-   Spinner spinnerPreguntas;
+   Spinner spinnerRespuestas;
+   private TextView nom_pre_abie;
+   int valorRta;
+   int posision = 900000;
 
 
     RequestQueue request;
@@ -237,48 +241,61 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
     @Override
     public void onErrorResponse(VolleyError error) {
         progreso.dismiss();
-
+        Toast.makeText(getApplicationContext(), "Error al cargar las preguntas", Toast.LENGTH_SHORT).show();
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.N)
-    private void showAlertSpinnerRespuestas(String title, String id_pre, final int position) {
+
+    private void showAlertSpinnerRespuestas(String title, final int position) {
+
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-
         if (title != null) builder.setTitle(title);
-
-        View viewInflated = LayoutInflater.from(this).inflate(R.layout.dialog_spinner_respuestas, null);
+        final View viewInflated = LayoutInflater.from(this).inflate(R.layout.dialog_spinner_respuestas, null);
         builder.setView(viewInflated);
 
-        spinnerPreguntas = viewInflated.findViewById(R.id.spinnerSeleRespuesta);
+        spinnerRespuestas = viewInflated.findViewById(R.id.spinnerSeleRespuesta);
         final EditText EditRespuesta = (EditText)viewInflated.findViewById(R.id.editTextRespuesta);
 
-        EditRespuesta.setVisibility(View.INVISIBLE);
-        spinnerPreguntas.setVisibility(View.INVISIBLE);
+        ArrayAdapter<CharSequence> adapter =  new ArrayAdapter(this,android.R.layout.simple_spinner_item,listaRespuestas);
+        spinnerRespuestas.setAdapter(adapter);
 
-        final int tipo =  preguntas.get(position).getTipo_pre();
-        if(tipo==1){
-            spinnerPreguntas.setVisibility(View.VISIBLE);
-            EditRespuesta.setVisibility(View.VISIBLE);
-            EditRespuesta.setInputType(NUMERIC);
-            cargarWebServiceRespuestas(id_pre);
-        }else{
-            spinnerPreguntas.setVisibility(View.VISIBLE);
-            cargarWebServiceRespuestas(id_pre);
-        }
+        spinnerRespuestas.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if(position!=0) {
 
+                    EditRespuesta.setVisibility(viewInflated.VISIBLE);
+                    int posisionRespuesta = position - 1;
+                    String tipoRespuesta = respuestas.get(posisionRespuesta).getTipo_pregunta();
+
+                    Toast.makeText(getApplicationContext(), tipoRespuesta, Toast.LENGTH_SHORT).show();
+                    if(tipoRespuesta.equals("numerico")){
+                        EditRespuesta.setInputType(NUMERIC);
+                    }else if (tipoRespuesta.equals("multiple")){
+                        EditRespuesta.setText(respuestas.get(posisionRespuesta).getNombre_resp());
+                        EditRespuesta.setEnabled(false);
+                    }else if(tipoRespuesta.equals("texto")){
+
+                    }
+
+                }else{
+                    EditRespuesta.setVisibility(viewInflated.INVISIBLE);
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
 
         builder.setPositiveButton("Enviar", new DialogInterface.OnClickListener() {
-            @TargetApi(Build.VERSION_CODES.N)
-            @Override
+
             public void onClick(DialogInterface dialog, int which) {
-                if(tipo==1){
+
+              /*  if(preguntas.get(position).getTipo_pre()==1){
                     if(EditRespuesta.getText().toString().equals("")){
                         Toast.makeText(getApplicationContext(), "Ingresa en el campo!!", Toast.LENGTH_SHORT).show();
-                    }else if (spinnerPreguntas.getSelectedItemPosition()==0) {
-                        Toast.makeText(getApplicationContext(), "Seleccione la respuesta a enviar ", Toast.LENGTH_SHORT).show();
                     }else{
-                        int selec = spinnerPreguntas.getSelectedItemPosition();
-                        String idRespuesta = String.valueOf(respuestas.get(selec-1).getId_resp());
+                        String idRespuesta = String.valueOf(respuestas.get(0).getId_resp());
                         resultado=EditRespuesta.getText().toString();
                         cargarWebServiceRegistroResultado(idRespuesta,idEvento, position);
                     }
@@ -290,7 +307,7 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
                     }else{
                         Toast.makeText(getApplicationContext(), "Debes seleccionar una respuesta.!!", Toast.LENGTH_SHORT).show();
                     }
-                }
+                }*/
             }
 
         });
@@ -349,20 +366,25 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
         request.add(stringRequest);
     }
 
-    private void cargarWebServiceRespuestas(String id_pre) {
-        String url = Utilidades_Request.HTTP + Utilidades_Request.IP + Utilidades_Request.CARPETA + "wsJSONConsultaRespuestas.php?id_pregunta="+id_pre;
+    private void cargarWebServiceRespuestas(String idPre, final int position, final String pregunta) {
+        progreso= new ProgressDialog(context);
+        progreso.setMessage("Cargando respuestas..");
+        progreso.show();
+
+        String url = Utilidades_Request.HTTP + Utilidades_Request.IP + Utilidades_Request.CARPETA + "wsJSONConsultaRespuestas.php?id_pregunta="+idPre;
 
         jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
-            @Override
+
+            @RequiresApi(api = Build.VERSION_CODES.N)
             public void onResponse(JSONObject response) {
                 // Toast.makeText(getApplicationContext(), response.toString(), Toast.LENGTH_SHORT).show();
+                progreso.dismiss();
                 respuestas = new ArrayList<>();
                 Respuesta respuesta = null;
 
                 JSONArray json = response.optJSONArray("respuesta");
 
                 try {
-
                         for (int i = 0; i < json.length(); i++) {
 
                             respuesta = new Respuesta();
@@ -372,12 +394,13 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
                             if(jsonObject.optInt("id_rpta")!=0){
                                 respuesta.setId_resp(jsonObject.optInt("id_rpta"));
                                 respuesta.setNombre_resp(jsonObject.optString("nomb_rpta"));
+                                respuesta.setTipo_pregunta(jsonObject.optString("tipo_pregunta"));
                                 respuestas.add(respuesta);
                             }
 
                         }
+                        obtenerlistRespuesta(pregunta,position);
 
-                        obtenerlistRespuesta();
 
                 }catch (JSONException e) {
                     e.printStackTrace();
@@ -386,7 +409,7 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-
+                progreso.dismiss();
                 Toast.makeText(context, "Error webservice. \n"+
                         "No hay conexion con la base de datos.", Toast.LENGTH_SHORT).show();
             }
@@ -394,26 +417,25 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
         request.add(jsonObjectRequest);
     }
 
-    private void obtenerlistRespuesta() {
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    private void obtenerlistRespuesta(String pregunta, int position) {
         listaRespuestas = new ArrayList<String>();
 
         listaRespuestas.add("Seleccione una respuesta");
         for(int i=0; i<respuestas.size(); i++) {
             listaRespuestas.add(/*respuestas.get(i).getId_resp() + " - " + */respuestas.get(i).getNombre_resp());
         }
-
-        ArrayAdapter<CharSequence> adapter =  new ArrayAdapter
-                (this,android.R.layout.simple_spinner_item,listaRespuestas);
-        spinnerPreguntas.setAdapter(adapter);
+       showAlertSpinnerRespuestas(pregunta ,position);
     }
 
-    @TargetApi(Build.VERSION_CODES.N)
-    @RequiresApi(api = Build.VERSION_CODES.N)
-    @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         String id_pre = String.valueOf(preguntas.get(position).getId_pre());
         String pregunta = String.valueOf(preguntas.get(position).getNombre_pre());
 
-        showAlertSpinnerRespuestas(pregunta, id_pre, position);
+        //showAlertSpinnerRespuestas(pregunta, id_pre, position);
+        if(posision != position){
+            posision=position;
+            cargarWebServiceRespuestas(id_pre, position, pregunta);
+        }
     }
 }
