@@ -266,7 +266,7 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
                     int posisionRespuesta = position - 1;
                     String tipoRespuesta = respuestas.get(posisionRespuesta).getTipo_pregunta();
 
-                    Toast.makeText(getApplicationContext(), tipoRespuesta, Toast.LENGTH_SHORT).show();
+
                     if(tipoRespuesta.equals("numerico")){
                         EditRespuesta.setInputType(NUMERIC);
                     }else if (tipoRespuesta.equals("multiple")){
@@ -291,23 +291,29 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
 
             public void onClick(DialogInterface dialog, int which) {
 
-              /*  if(preguntas.get(position).getTipo_pre()==1){
-                    if(EditRespuesta.getText().toString().equals("")){
-                        Toast.makeText(getApplicationContext(), "Ingresa en el campo!!", Toast.LENGTH_SHORT).show();
-                    }else{
-                        String idRespuesta = String.valueOf(respuestas.get(0).getId_resp());
-                        resultado=EditRespuesta.getText().toString();
-                        cargarWebServiceRegistroResultado(idRespuesta,idEvento, position);
+                if (spinnerRespuestas.getSelectedItemPosition() != 0) {
+
+                    int pos = spinnerRespuestas.getSelectedItemPosition() - 1;
+                    String tipo = respuestas.get(pos).getTipo_pregunta();
+
+                    if (tipo.equals("numerico") || tipo.equals("texto")) {
+
+                        if (EditRespuesta.getText().toString().equals("")) {
+                            Toast.makeText(getApplicationContext(), "Ingresa en el campo!!", Toast.LENGTH_SHORT).show();
+                        } else {
+                            String idRespuesta = String.valueOf(respuestas.get(pos).getId_resp());
+                            resultado = EditRespuesta.getText().toString();
+                            cargarWebServiceRegistroResultado(idRespuesta, idEvento, position);
+                        }
+
+                    } else if (tipo.equals("multiple")) {
+
+                        String idRespuesta = String.valueOf(respuestas.get(pos).getId_resp());
+                        cargarWebServiceRegistroResultado(idRespuesta, idEvento, position);
                     }
                 }else{
-                    int selec = spinnerPreguntas.getSelectedItemPosition();
-                    if(selec  != 0){
-                        String idRespuesta = String.valueOf(respuestas.get(selec-1).getId_resp());
-                        cargarWebServiceRegistroResultado(idRespuesta,idEvento, position);
-                    }else{
-                        Toast.makeText(getApplicationContext(), "Debes seleccionar una respuesta.!!", Toast.LENGTH_SHORT).show();
-                    }
-                }*/
+                    Toast.makeText(getApplicationContext(), "Selecciona alguna respuesta", Toast.LENGTH_SHORT).show();
+                }
             }
 
         });
@@ -335,7 +341,7 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
                 }else{
                     Toast.makeText(context,"Registro Exitoso. ", Toast.LENGTH_SHORT).show();
                     preguntas.remove(position);
-
+                    resultado="";
                     if(preguntas.size()==0){
                         Intent intent = new Intent(PreguntasActivity.this, UltimaActivity.class);
                         startActivity(intent);
