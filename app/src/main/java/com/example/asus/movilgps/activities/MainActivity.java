@@ -3,11 +3,14 @@ package com.example.asus.movilgps.activities;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
@@ -15,11 +18,19 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.location.LocationProvider;
+import android.media.MediaScannerConnection;
+import android.net.Uri;
 import android.os.Build;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
+import android.provider.MediaStore;
+import android.provider.Settings;
+import android.support.annotation.NonNull;
+import android.support.annotation.RequiresApi;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.FileProvider;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -30,6 +41,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -49,16 +61,28 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.logging.LogRecord;
 
+import static android.Manifest.permission.CAMERA;
+import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
+
+
 public class MainActivity extends AppCompatActivity {
 
     private static final int INTERVALO = 2000; //2 segundos para salir
     private long tiempoPrimerClick;
+    private static final int COD_SELECIONA = 10;
+    private static final int COD_FOTO = 20;
+
+    private final String carpeta_raiz="misImagenes/";
+    private final String ruta_imagen=carpeta_raiz+"misFotos";
+    String path;
+
     final long PERIODO = 60000; // 1 minuto
     private Handler handler;
     private Runnable runnable;
@@ -69,6 +93,7 @@ public class MainActivity extends AppCompatActivity {
     ProgressDialog progreso;
     Context context;
     FloatingActionButton gps;
+    ImageView foto;
 
     RequestQueue request;
     JsonObjectRequest jsonObjectRequest;
@@ -90,26 +115,38 @@ public class MainActivity extends AppCompatActivity {
         direccion = findViewById(R.id.TextDireccion);
         spinner = findViewById(R.id.spinnerSeleEncu);
         btnEnvio = findViewById(R.id.btn_Enviar);
+        foto = findViewById(R.id.foto);
 
         context = MainActivity.this;
         encuestass= new ArrayList<>();
         request = Volley.newRequestQueue(getApplicationContext());
         btnEnvio.setEnabled(false);
 
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION,}, 1000);
-        } else {
-            locationStart();
-        }
         cargarwebservice();
+        locationStart();
+        if(validaPermisosCamara()){
+            foto.setEnabled(true);
+        }else{
+            foto.setEnabled(true);
+        }
 
         gps.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                locationStart();
-                gps.setEnabled(false);
+                if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION)
+                        != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_COARSE_LOCATION)
+                        != PackageManager.PERMISSION_GRANTED) {
+                    ActivityCompat.requestPermissions((Activity) context, new String[]{Manifest.permission.ACCESS_FINE_LOCATION,}, 1000);
+                } else {
+                    locationStart();
+                }
+            }
+        });
+
+        foto.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showAlertFoto();
             }
         });
 
@@ -159,6 +196,136 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+    }
+
+    private boolean validaPermisosCamara()
+    {
+        if(Build.VERSION.SDK_INT<Build.VERSION_CODES.M) {
+            return true;
+        }
+
+        if((checkSelfPermission(CAMERA)==PackageManager.PERMISSION_GRANTED)&&
+                (checkSelfPermission(WRITE_EXTERNAL_STORAGE)==PackageManager.PERMISSION_GRANTED)) {
+            return true;
+        }
+
+        if((shouldShowRequestPermissionRationale(CAMERA)) ||
+                (shouldShowRequestPermissionRationale(WRITE_EXTERNAL_STORAGE))){
+            cargarDialogoRecomendation();
+        }else{
+            requestPermissions(new String[]{WRITE_EXTERNAL_STORAGE,CAMERA},100);
+        }
+
+        return false;
+    }
+
+    private void cargarDialogoRecomendation() {
+        AlertDialog.Builder dialog = new AlertDialog.Builder(context);
+        dialog.setTitle("Permisos desactivados..");
+        dialog.setMessage("Debes aceptar los permisos para el correcto funcionamiento de la app");
+
+        dialog.setPositiveButton("Aceptar", new DialogInterface.OnClickListener() {
+            @RequiresApi(api = Build.VERSION_CODES.M)
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                requestPermissions(new String[]{WRITE_EXTERNAL_STORAGE,CAMERA},100);
+            }
+        });
+        dialog.show();
+    }
+
+    private void showAlertFoto() {
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        builder.setTitle("Elige una opcion");
+        final CharSequence[] opciones = {"Tomar Foto","Elegir Galeria","Cancelar"};
+
+        builder.setItems(opciones, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int i) {
+
+                if (opciones[i].equals("Tomar Foto")) {
+                    abrirCamara();
+                }else if(opciones[i].equals("Elegir Galeria")){
+
+                        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                        intent.setType("image/");
+                        startActivityForResult(intent.createChooser(intent,"Seleccione"),COD_SELECIONA);
+                }else{
+                    dialog.dismiss();
+                }
+
+            }
+        });
+
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+
+    }
+
+    private void abrirCamara() {
+
+        File fileImagen = new File(Environment.getExternalStorageDirectory(), ruta_imagen);
+        boolean isCreada= fileImagen.exists();
+        String nombreImagen = "";
+
+        if(isCreada==false){
+            isCreada=fileImagen.mkdirs();
+        }
+
+        if(isCreada==true){
+            nombreImagen = (System.currentTimeMillis()/10000)+".jpg";
+        }
+
+        path = Environment.getExternalStorageDirectory()+
+                File.separator+ruta_imagen+File.separator+nombreImagen;
+
+        File imagen = new File(path);
+
+
+        Intent intent = null;
+        intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+
+      /*  if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.N)
+        {
+            String authorities = getApplicationContext().getPackageName()+".provider";
+            Uri imageUri = FileProvider.getUriForFile(this,authorities, imagen);
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
+        }else
+        {*/
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(imagen));
+        /*}*/
+
+        startActivityForResult(intent, COD_FOTO);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(requestCode==RESULT_OK){
+
+            switch (requestCode){
+                case COD_SELECIONA:
+                    Uri miPath= data.getData();
+                    foto.setImageURI(miPath);
+                    break;
+                case COD_FOTO:
+
+                    MediaScannerConnection.scanFile(this, new String[]{path}, null,
+                                new MediaScannerConnection.OnScanCompletedListener() {
+                        @Override
+                        public void onScanCompleted(String path, Uri uri) {
+                            Log.i("Ruta de almacenamiento","Path: "+ path);
+                        }
+                    });
+
+                    Bitmap bitmap = BitmapFactory.decodeFile(path);
+                    foto.setImageResource(R.drawable.boton_redondo);
+                    break;
+            }
+        }
     }
 
     private void cargarwebservice() {
@@ -278,13 +445,53 @@ public class MainActivity extends AppCompatActivity {
         mlocManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, (LocationListener) Local);
     }
 
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
         if (requestCode == 1000) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 locationStart();
                 return;
             }
         }
+
+        if (requestCode == 100) {
+            if (grantResults.length==2 && grantResults[0] == PackageManager.PERMISSION_GRANTED &&
+                    grantResults[1] == PackageManager.PERMISSION_GRANTED) {
+                foto.setEnabled(true);
+            }else{
+                Toast.makeText(context, " No se activaron permisos de CAMARA", Toast.LENGTH_SHORT).show();
+                solicitarPermisoManual();
+            }
+        }
+    }
+
+    private void solicitarPermisoManual() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        builder.setTitle("Permisos de camara Manuales");
+        final CharSequence[] opciones = {"Si","No"};
+
+        builder.setItems(opciones, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int i) {
+
+                if (opciones[i].equals("Si")) {
+                    Intent intent = new Intent();
+                    intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                    Uri uri = Uri.fromParts("package", getPackageName(), null);
+                    intent.setData(uri);
+                    startActivity(intent);
+                }
+
+            }
+        });
+
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
     }
 
     //Obtiene Direccion
