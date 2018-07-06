@@ -75,6 +75,8 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
    private TextView nom_pre_abie;
    int valorRta;
    int posision = 900000;
+   String Latitude;
+   String Longitude;
 
 
     RequestQueue request;
@@ -93,61 +95,14 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
         listView = findViewById(R.id.listViewPreguntas);
         preguntas = new ArrayList<>();
 
-        String Latitude = getIntent().getStringExtra("latitud");
-        String Longitude = getIntent().getStringExtra("longitud");
+        idEvento = getIntent().getStringExtra("evento");
         idEncuesta = getIntent().getStringExtra("idEncuesta");
 
-        cargarWebService(Latitude, Longitude, idEncuesta);
+        cargarWebServicePreguntas(idEncuesta);
 
     }
 
-    private void cargarWebService(final String latitude, final String longitude, final String idEncuesta) {
 
-        progreso= new ProgressDialog(context);
-        progreso.setMessage("Enviando datos..");
-        progreso.show();
-
-        String url = Utilidades_Request.HTTP+Utilidades_Request.IP+Utilidades_Request.CARPETA+"wsJSONRegistroEvento.php?";
-
-        stringRequest = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-                progreso.hide();
-
-                if(response.trim().equalsIgnoreCase("Noregistra")){
-                    Toast.makeText(context,"No registro ocurrio un error ", Toast.LENGTH_SHORT).show();
-
-                    Intent intent = new Intent(PreguntasActivity.this, MainActivity.class);
-                    startActivity(intent);
-
-                }else{
-                   // Toast.makeText(context,"Registro Exitoso "+response.toString(), Toast.LENGTH_SHORT).show();
-                    idEvento= response.toString();
-                    cargarWebServicePreguntas(idEncuesta);
-                }
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                progreso.hide();
-                Toast.makeText(context,"Ocurrio un error en el servidor " + error.toString(), Toast.LENGTH_SHORT).show();
-                Log.i("Error", error.toString());
-                Intent intent = new Intent(PreguntasActivity.this, MainActivity.class);
-                startActivity(intent);
-            }
-        }){
-            @Override
-            protected Map<String, String> getParams() throws AuthFailureError {
-
-                Map<String,String> paramentros = new HashMap<>();
-                paramentros.put("encuesta", idEncuesta);
-                paramentros.put("cx",latitude);
-                paramentros.put("cy",longitude);
-                return paramentros;
-            }
-        };
-        request.add(stringRequest);
-    }
 
     private void cargarWebServicePreguntas(String idEncuesta) {
 
@@ -171,16 +126,16 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
         JSONArray json = response.optJSONArray("pregunta");
 
         try {
-            if(preguntas.size() == 0){
-                for(int i=0;i<json.length(); i++){
+            if(preguntas.size() == 0) {
+                for (int i = 0; i < json.length(); i++) {
                     pregunta = new Pregunta();
                     JSONObject jsonObject = null;
 
                     jsonObject = json.getJSONObject(i);
-                    if(jsonObject.optInt("id_pgta")==0){
-                        Toast.makeText(getApplicationContext(),"no existe en la bd" , Toast.LENGTH_SHORT).show();
+                    if (jsonObject.optInt("id_pgta") == 0) {
+                        Toast.makeText(getApplicationContext(), "no existe en la bd", Toast.LENGTH_SHORT).show();
 
-                    }else{
+                    } else {
                         pregunta.setId_pre(jsonObject.optInt("id_pgta"));
                         pregunta.setNombre_pre(jsonObject.optString("nomb_pgta"));
                         pregunta.setTipo_pre(jsonObject.optInt("tipo_pregunta"));
@@ -188,40 +143,7 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
                         preguntas.add(pregunta);
                     }
                 }
-            }/*else {
-                validates = new ArrayList<>();
-                for (int i = 0; i < json.length(); i++) {
-
-                    validate = new validate();
-                    JSONObject jsonObject = null;
-                    jsonObject = json.getJSONObject(i);
-
-                    validate.setId(jsonObject.optInt("id_pgta"));
-                    validate.setNombre(jsonObject.optString("nomb_pgta"));
-                    validate.setTipo(jsonObject.optInt("tipo_pregunta"));
-                    validates.add(validate);
-                }
-
-                Toast.makeText(getApplicationContext(), "Listo validate ", Toast.LENGTH_SHORT).show();
-                if (validates.size() != preguntas.size()) {
-                    if (validates.size() > preguntas.size()) {
-                        int numero_agregar = validates.size() - preguntas.size();
-                        int numero_preguntas = preguntas.size();
-
-                        Toast.makeText(getApplicationContext(), "faltan  " + String.valueOf(numero_agregar) + " por agregar.", Toast.LENGTH_SHORT).show();
-                        for (int i = 0; i < numero_agregar; i++) {
-                            //Toast.makeText(getApplicationContext(), "Hay que agregar el s: "+ validates.get(numero_encuestas+i).getId().toString() + " - " + validates.get(numero_encuestas+i).getNombre(), Toast.LENGTH_SHORT).show();
-                            pregunta = new Pregunta();
-                            pregunta.setId_pre(validates.get(numero_preguntas + i).getId());
-                            pregunta.setNombre_pre(validates.get(numero_preguntas + i).getNombre());
-                            pregunta.setTipo_pre(validates.get(numero_preguntas + i).getTipo());
-                            pregunta.setEstado(0);
-                            preguntas.add(pregunta);
-                        }
-                    }
-
-                }
-            }*/
+            }
 
             progreso.hide();
 

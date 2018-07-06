@@ -12,6 +12,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -29,11 +30,14 @@ import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.BuildConfig;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Base64;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -46,11 +50,13 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.example.asus.movilgps.R;
 import com.example.asus.movilgps.Utilidades.Utilidades_Request;
@@ -61,15 +67,22 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.logging.LogRecord;
 
 import static android.Manifest.permission.CAMERA;
 import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
+import static android.support.v4.content.FileProvider.getUriForFile;
+import static java.security.AccessController.getContext;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -78,10 +91,13 @@ public class MainActivity extends AppCompatActivity {
     private long tiempoPrimerClick;
     private static final int COD_SELECIONA = 10;
     private static final int COD_FOTO = 20;
+    private static final int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 1 ;
 
     private final String carpeta_raiz="misImagenes/";
     private final String ruta_imagen=carpeta_raiz+"misFotos";
     String path;
+    Bitmap bitmap;
+    int permissionCheck;
 
     final long PERIODO = 60000; // 1 minuto
     private Handler handler;
@@ -94,6 +110,7 @@ public class MainActivity extends AppCompatActivity {
     Context context;
     FloatingActionButton gps;
     ImageView foto;
+    String mCurrentPhotoPath;
 
     RequestQueue request;
     JsonObjectRequest jsonObjectRequest;
@@ -103,6 +120,7 @@ public class MainActivity extends AppCompatActivity {
     ArrayList<Encuestas> encuestass;
     ArrayList<validate> validates;
     ArrayAdapter<CharSequence> adapter;
+    StringRequest stringRequest;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -121,13 +139,14 @@ public class MainActivity extends AppCompatActivity {
         encuestass= new ArrayList<>();
         request = Volley.newRequestQueue(getApplicationContext());
         btnEnvio.setEnabled(false);
+        permissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
 
         cargarwebservice();
         locationStart();
         if(validaPermisosCamara()){
             foto.setEnabled(true);
         }else{
-            foto.setEnabled(true);
+            foto.setEnabled(false);
         }
 
         gps.setOnClickListener(new View.OnClickListener() {
@@ -157,32 +176,26 @@ public class MainActivity extends AppCompatActivity {
 
                 final int selec=spinner.getSelectedItemPosition();
                 if(selec!= 0){
-                        progreso = new ProgressDialog(context);
-                        progreso.setMessage("Cargando coordenadas..");
-                        progreso.show();
-                        new android.os.Handler().postDelayed(
-                                new Runnable() {
-                                    public void run() {
 
-                                        String idEncuesta = encuestass.get(selec-1).getId_encuesta().toString();
-                                        String lat = latitude.getText().toString();
-                                        String lon = longitude.getText().toString();
+                    String idEncuesta = encuestass.get(selec-1).getId_encuesta().toString();
+                    String lat = latitude.getText().toString();
+                    String lon = longitude.getText().toString();
 
+                    if(lat != "" && lon != ""){
+                        if(bitmap != null){
+                            cargarWebServiceRegistro_Coo_Ima(lat, lon, idEncuesta);
+                        }else{
+                            Toast.makeText(context, "Tienes que tomar una foto!..", Toast.LENGTH_SHORT).show();
+                        }
 
-                                        Intent i = new Intent(MainActivity.this, PreguntasActivity.class);
-                                        i.putExtra("latitud", lat);
-                                        i.putExtra("longitud", lon);
-                                        i.putExtra("idEncuesta", idEncuesta);
-                                        startActivity(i);
-                                        finish();
-
-                                        progreso.dismiss();
-                                    }
-                                }, 3000);
                     }else{
-                        Toast.makeText(context, "Tienes que seleccionar un evento", Toast.LENGTH_SHORT).show();
-                        spinner.setFocusable(true);
+                        Toast.makeText(context, "Espera a que cargue las coordenadas", Toast.LENGTH_SHORT).show();
                     }
+
+                }else{
+                    Toast.makeText(context, "Tienes que seleccionar un evento", Toast.LENGTH_SHORT).show();
+                    spinner.setFocusable(true);
+                }
             }
         });
 
@@ -222,7 +235,7 @@ public class MainActivity extends AppCompatActivity {
     private void cargarDialogoRecomendation() {
         AlertDialog.Builder dialog = new AlertDialog.Builder(context);
         dialog.setTitle("Permisos desactivados..");
-        dialog.setMessage("Debes aceptar los permisos para el correcto funcionamiento de la app");
+        dialog.setMessage("Debes aceptar los permisos CAMERA y MEMORIA");
 
         dialog.setPositiveButton("Aceptar", new DialogInterface.OnClickListener() {
             @RequiresApi(api = Build.VERSION_CODES.M)
@@ -246,7 +259,11 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(DialogInterface dialog, int i) {
 
                 if (opciones[i].equals("Tomar Foto")) {
-                    abrirCamara();
+                    try {
+                        abrirCamara();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }else if(opciones[i].equals("Elegir Galeria")){
 
                         Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
@@ -265,7 +282,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void abrirCamara() {
+    private void abrirCamara() throws IOException {
 
         File fileImagen = new File(Environment.getExternalStorageDirectory(), ruta_imagen);
         boolean isCreada= fileImagen.exists();
@@ -284,19 +301,20 @@ public class MainActivity extends AppCompatActivity {
 
         File imagen = new File(path);
 
-
         Intent intent = null;
         intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
 
-      /*  if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.N)
+        if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.N)
         {
             String authorities = getApplicationContext().getPackageName()+".provider";
-            Uri imageUri = FileProvider.getUriForFile(this,authorities, imagen);
+            Uri imageUri = FileProvider.getUriForFile(MainActivity.this,
+                    authorities,
+                   imagen);
             intent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
         }else
-        {*/
+        {
             intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(imagen));
-        /*}*/
+        }
 
         startActivityForResult(intent, COD_FOTO);
     }
@@ -304,28 +322,107 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if(requestCode==RESULT_OK){
+        if(requestCode==COD_FOTO || requestCode==COD_SELECIONA) switch (requestCode) {
+            case COD_SELECIONA:
+                Uri miPath = data.getData();
+                foto.setImageURI(miPath);
+                try {
+                    bitmap = MediaStore.Images.Media.getBitmap(MainActivity.this.getContentResolver(), miPath);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                break;
+            case COD_FOTO:
 
-            switch (requestCode){
-                case COD_SELECIONA:
-                    Uri miPath= data.getData();
-                    foto.setImageURI(miPath);
-                    break;
-                case COD_FOTO:
+                MediaScannerConnection.scanFile(this, new String[]{path}, null,
+                        new MediaScannerConnection.OnScanCompletedListener() {
+                            @Override
+                            public void onScanCompleted(String path, Uri uri) {
+                                Log.i("Ruta de almacenamiento", "Path: " + path);
+                            }
+                        });
 
-                    MediaScannerConnection.scanFile(this, new String[]{path}, null,
-                                new MediaScannerConnection.OnScanCompletedListener() {
-                        @Override
-                        public void onScanCompleted(String path, Uri uri) {
-                            Log.i("Ruta de almacenamiento","Path: "+ path);
-                        }
-                    });
-
-                    Bitmap bitmap = BitmapFactory.decodeFile(path);
-                    foto.setImageResource(R.drawable.boton_redondo);
-                    break;
-            }
+                bitmap = BitmapFactory.decodeFile(path);
+                foto.setImageBitmap(bitmap);
+                break;
         }
+        bitmap=redimensionarImagen(bitmap, 256, 197);
+    }
+
+    private Bitmap redimensionarImagen(Bitmap bitmap, float anchoNuevo, float altoNuevo) {
+
+        int ancho = bitmap.getWidth();
+        int alto = bitmap.getHeight();
+
+        if(ancho>anchoNuevo || alto>altoNuevo){
+            float escalaAncho = anchoNuevo/ancho;
+            float escalaAlto = altoNuevo/alto;
+
+            Matrix matrix = new Matrix();
+            matrix.postScale(escalaAncho,escalaAlto);
+
+            return Bitmap.createBitmap(bitmap,0,0, ancho, alto, matrix, false);
+        }else{
+            return bitmap;
+        }
+    }
+
+    private void cargarWebServiceRegistro_Coo_Ima(final String latitude, final String longitude, final String idEncuesta) {
+
+        progreso= new ProgressDialog(context);
+        progreso.setMessage("Enviando datos..");
+        progreso.show();
+
+        String url = Utilidades_Request.HTTP+Utilidades_Request.IP+Utilidades_Request.CARPETA+"wsJSONRegistroEvento.php?";
+
+        stringRequest = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                progreso.hide();
+
+                if(response.trim().equalsIgnoreCase("Noregistra")){
+                    Toast.makeText(context,"No registro ocurrio un error ", Toast.LENGTH_SHORT).show();
+                }else{
+                   String idEvento= response.toString();
+                    Intent i = new Intent(MainActivity.this, PreguntasActivity.class);
+                    i.putExtra("idEncuesta", idEncuesta);
+                    i.putExtra("evento", idEvento);
+                    startActivity(i);
+                    finish();
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                progreso.hide();
+                Toast.makeText(context,"Ocurrio un error en el servidor " + error.toString(), Toast.LENGTH_SHORT).show();
+                Log.i("Error", error.toString());
+            }
+        }){
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+
+                String imagen =convertirImgString(bitmap);
+
+                Map<String,String> paramentros = new HashMap<>();
+                paramentros.put("encuesta", idEncuesta);
+                paramentros.put("cx",latitude);
+                paramentros.put("cy",longitude);
+                paramentros.put("imagen", imagen);
+                return paramentros;
+            }
+        };
+        request.add(stringRequest);
+    }
+
+    private String convertirImgString(Bitmap bitmap) {
+
+        ByteArrayOutputStream array = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG,100,array);
+        byte[] imagenByte = array.toByteArray();
+        String imagenString = Base64.encodeToString(imagenByte,Base64.DEFAULT);
+
+        return imagenString;
     }
 
     private void cargarwebservice() {
@@ -463,7 +560,7 @@ public class MainActivity extends AppCompatActivity {
                 foto.setEnabled(true);
             }else{
                 Toast.makeText(context, " No se activaron permisos de CAMARA", Toast.LENGTH_SHORT).show();
-                solicitarPermisoManual();
+                cargarDialogoRecomendation();
             }
         }
     }
