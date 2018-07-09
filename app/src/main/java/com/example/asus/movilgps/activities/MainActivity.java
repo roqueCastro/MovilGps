@@ -110,7 +110,7 @@ public class MainActivity extends AppCompatActivity {
     Context context;
     FloatingActionButton gps;
     ImageView foto;
-    String mCurrentPhotoPath;
+
 
     RequestQueue request;
     JsonObjectRequest jsonObjectRequest;
@@ -210,6 +210,222 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
+    /*----------------ALL WEBSERVICE-----------------------*/
+
+    private void cargarwebservice() {
+        String url = Utilidades_Request.HTTP + Utilidades_Request.IP + Utilidades_Request.CARPETA + "WSConsultaEncuestas.php";
+
+        jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+                // Toast.makeText(getApplicationContext(), response.toString(), Toast.LENGTH_SHORT).show();
+
+                btnEnvio.setEnabled(true);
+                Encuestas encuestas = null;
+                validate validate = null;
+
+                JSONArray json = response.optJSONArray("encuesta");
+
+                try {
+                    if(encuestass.size() == 0){
+                        for (int i = 0; i < json.length(); i++) {
+
+                            encuestas = new Encuestas();
+                            JSONObject jsonObject = null;
+                            jsonObject = json.getJSONObject(i);
+
+                            encuestas.setId_encuesta(jsonObject.optInt("id_encuesta"));
+                            encuestas.setNombre_encuesta(jsonObject.optString("nomb_encta"));
+                            encuestass.add(encuestas);
+                        }
+                    }else{
+                        validates = new ArrayList<>();
+                        for (int i = 0; i < json.length(); i++) {
+
+                            validate = new validate();
+                            JSONObject jsonObject = null;
+                            jsonObject = json.getJSONObject(i);
+
+                            validate.setId(jsonObject.optInt("id_encuesta"));
+                            validate.setNombre(jsonObject.optString("nomb_encta"));
+                            validates.add(validate);
+                        }
+
+                        if(validates.size()!=encuestass.size()){
+                            if(validates.size()>encuestass.size()){
+                                int numero_agregar= validates.size()-encuestass.size();
+                                int numero_encuestas= encuestass.size();
+
+                                progreso = new ProgressDialog(context);
+                                progreso.setMessage("Agregando datos...");
+                                progreso.show();
+
+                                for (int i=0; i<numero_agregar; i++){
+                                    //Toast.makeText(getApplicationContext(), "Hay que agregar el s: "+ validates.get(numero_encuestas+i).getId().toString() + " - " + validates.get(numero_encuestas+i).getNombre(), Toast.LENGTH_SHORT).show();
+                                    encuestas = new Encuestas();
+                                    encuestas.setId_encuesta(validates.get(numero_encuestas+i).getId());
+                                    encuestas.setNombre_encuesta(validates.get(numero_encuestas+i).getNombre());
+                                    encuestass.add(encuestas);
+                                }
+                                progreso.dismiss();
+                                Toast.makeText(getApplicationContext(), "Se agregaron  "+ String.valueOf(numero_agregar)+ " encuestas.", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    }
+
+                    obtenerList();
+
+                }catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+
+                Toast.makeText(context, "Error webservice. \n"+
+                        "No hay conexion con la base de datos.", Toast.LENGTH_SHORT).show();
+                btnEnvio.setEnabled(false);
+            }
+        });
+        request.add(jsonObjectRequest);
+    }
+
+    private void cargarWebServiceRegistro_Coo_Ima(final String latitude, final String longitude, final String idEncuesta) {
+
+        progreso= new ProgressDialog(context);
+        progreso.setMessage("Enviando datos..");
+        progreso.show();
+
+        String url = Utilidades_Request.HTTP+Utilidades_Request.IP+Utilidades_Request.CARPETA+"wsJSONRegistroEvento.php?";
+
+        stringRequest = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                progreso.hide();
+
+                if(response.trim().equalsIgnoreCase("Noregistra")){
+                    Toast.makeText(context,"No registro ocurrio un error ", Toast.LENGTH_SHORT).show();
+                }else{
+                    String idEvento= response.toString();
+                    Intent i = new Intent(MainActivity.this, PreguntasActivity.class);
+                    i.putExtra("idEncuesta", idEncuesta);
+                    i.putExtra("evento", idEvento);
+                    startActivity(i);
+                    finish();
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                progreso.hide();
+                Toast.makeText(context,"Ocurrio un error en el servidor " + error.toString(), Toast.LENGTH_SHORT).show();
+                Log.i("Error", error.toString());
+            }
+        }){
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+
+                String imagen =convertirImgString(bitmap);
+
+                Map<String,String> paramentros = new HashMap<>();
+                paramentros.put("encuesta", idEncuesta);
+                paramentros.put("cx",latitude);
+                paramentros.put("cy",longitude);
+                paramentros.put("imagen", imagen);
+                return paramentros;
+            }
+        };
+        request.add(stringRequest);
+    }
+
+    /*-------------LOCATION GPS----------------*/
+
+    private void locationStart() {
+        LocationManager mlocManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        Localizacion Local = new Localizacion();
+        Local.setMainActivity(this);
+        gpsEnaDis();
+        onstartGos(mlocManager,Local);
+    }
+
+    // CLASE LOCATION
+    public class Localizacion implements LocationListener {
+        MainActivity mainActivity;
+
+        /*public MainActivity getMainActivity() {
+            return mainActivity;
+        }*/
+
+        public void setMainActivity(MainActivity mainActivity) {
+            this.mainActivity = mainActivity;
+        }
+
+        @Override
+        public void onLocationChanged(Location loc) {
+            // Este metodo se ejecuta cada vez que el GPS recibe nuevas coordenadas
+            // debido a la deteccion de un cambio de ubicacion
+
+            String lat = String.valueOf(loc.getLatitude());
+            String lon = String.valueOf(loc.getLongitude());
+            latitude.setText(lat);
+            longitude.setText(lon);
+
+            this.mainActivity.setLocation(loc);
+        }
+
+        @Override
+        public void onProviderDisabled(String provider) {
+            // Este metodo se ejecuta cuando el GPS es desactivado
+        }
+
+        @Override
+        public void onProviderEnabled(String provider) {
+            // Este metodo se ejecuta cuando el GPS es activado
+            Toast.makeText(getApplicationContext(), "Activo",Toast.LENGTH_SHORT).show();
+        }
+
+        @Override
+        public void onStatusChanged(String provider, int status, Bundle extras) {
+            switch (status) {
+                case LocationProvider.AVAILABLE:
+                    Log.d("debug", "LocationProvider.AVAILABLE");
+                    break;
+                case LocationProvider.OUT_OF_SERVICE:
+                    Log.d("debug", "LocationProvider.OUT_OF_SERVICE");
+                    break;
+                case LocationProvider.TEMPORARILY_UNAVAILABLE:
+                    Log.d("debug", "LocationProvider.TEMPORARILY_UNAVAILABLE");
+                    break;
+            }
+        }
+
+    }
+
+
+    //Obtiene Direccion
+    public void setLocation(Location loc) {
+        //Obtener la direccion de la calle a partir de la latitud y la longitud
+        if (loc.getLatitude() != 0.0 && loc.getLongitude() != 0.0) {
+            try {
+                Geocoder geocoder = new Geocoder(this, Locale.getDefault());
+                List<Address> list = geocoder.getFromLocation(
+                        loc.getLatitude(), loc.getLongitude(), 1);
+                if (!list.isEmpty()) {
+                    Address DirCalle = list.get(0);
+                    String calle = DirCalle.getAddressLine(0);
+                    direccion.setText(calle);
+                    gps.setEnabled(true);
+                }
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+
 
     private boolean validaPermisosCamara()
     {
@@ -322,31 +538,36 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if(requestCode==COD_FOTO || requestCode==COD_SELECIONA) switch (requestCode) {
-            case COD_SELECIONA:
-                Uri miPath = data.getData();
-                foto.setImageURI(miPath);
-                try {
-                    bitmap = MediaStore.Images.Media.getBitmap(MainActivity.this.getContentResolver(), miPath);
-                } catch (IOException e) {
-                    e.printStackTrace();
+
+        if(requestCode==COD_FOTO || requestCode==COD_SELECIONA)  {
+            if(resultCode != 0){
+                switch (requestCode){
+                    case COD_SELECIONA:
+                        Uri miPath = data.getData();
+                        foto.setImageURI(miPath);
+                        try {
+                            bitmap = MediaStore.Images.Media.getBitmap(MainActivity.this.getContentResolver(), miPath);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        break;
+                    case COD_FOTO:
+
+                        MediaScannerConnection.scanFile(this, new String[]{path}, null,
+                                new MediaScannerConnection.OnScanCompletedListener() {
+                                    @Override
+                                    public void onScanCompleted(String path, Uri uri) {
+                                        Log.i("Ruta de almacenamiento", "Path: " + path);
+                                    }
+                                });
+
+                        bitmap = BitmapFactory.decodeFile(path);
+                        foto.setImageBitmap(bitmap);
+                        break;
                 }
-                break;
-            case COD_FOTO:
-
-                MediaScannerConnection.scanFile(this, new String[]{path}, null,
-                        new MediaScannerConnection.OnScanCompletedListener() {
-                            @Override
-                            public void onScanCompleted(String path, Uri uri) {
-                                Log.i("Ruta de almacenamiento", "Path: " + path);
-                            }
-                        });
-
-                bitmap = BitmapFactory.decodeFile(path);
-                foto.setImageBitmap(bitmap);
-                break;
+                bitmap=redimensionarImagen(bitmap, 300, 300);
+            }
         }
-        bitmap=redimensionarImagen(bitmap, 256, 197);
     }
 
     private Bitmap redimensionarImagen(Bitmap bitmap, float anchoNuevo, float altoNuevo) {
@@ -367,53 +588,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void cargarWebServiceRegistro_Coo_Ima(final String latitude, final String longitude, final String idEncuesta) {
 
-        progreso= new ProgressDialog(context);
-        progreso.setMessage("Enviando datos..");
-        progreso.show();
-
-        String url = Utilidades_Request.HTTP+Utilidades_Request.IP+Utilidades_Request.CARPETA+"wsJSONRegistroEvento.php?";
-
-        stringRequest = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-                progreso.hide();
-
-                if(response.trim().equalsIgnoreCase("Noregistra")){
-                    Toast.makeText(context,"No registro ocurrio un error ", Toast.LENGTH_SHORT).show();
-                }else{
-                   String idEvento= response.toString();
-                    Intent i = new Intent(MainActivity.this, PreguntasActivity.class);
-                    i.putExtra("idEncuesta", idEncuesta);
-                    i.putExtra("evento", idEvento);
-                    startActivity(i);
-                    finish();
-                }
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                progreso.hide();
-                Toast.makeText(context,"Ocurrio un error en el servidor " + error.toString(), Toast.LENGTH_SHORT).show();
-                Log.i("Error", error.toString());
-            }
-        }){
-            @Override
-            protected Map<String, String> getParams() throws AuthFailureError {
-
-                String imagen =convertirImgString(bitmap);
-
-                Map<String,String> paramentros = new HashMap<>();
-                paramentros.put("encuesta", idEncuesta);
-                paramentros.put("cx",latitude);
-                paramentros.put("cy",longitude);
-                paramentros.put("imagen", imagen);
-                return paramentros;
-            }
-        };
-        request.add(stringRequest);
-    }
 
     private String convertirImgString(Bitmap bitmap) {
 
@@ -425,84 +600,7 @@ public class MainActivity extends AppCompatActivity {
         return imagenString;
     }
 
-    private void cargarwebservice() {
-        String url = Utilidades_Request.HTTP + Utilidades_Request.IP + Utilidades_Request.CARPETA + "WSConsultaEncuestas.php";
 
-        jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
-            @Override
-            public void onResponse(JSONObject response) {
-               // Toast.makeText(getApplicationContext(), response.toString(), Toast.LENGTH_SHORT).show();
-
-                btnEnvio.setEnabled(true);
-                 Encuestas encuestas = null;
-                 validate validate = null;
-
-                JSONArray json = response.optJSONArray("encuesta");
-
-                try {
-                    if(encuestass.size() == 0){
-                        for (int i = 0; i < json.length(); i++) {
-
-                            encuestas = new Encuestas();
-                            JSONObject jsonObject = null;
-                            jsonObject = json.getJSONObject(i);
-
-                            encuestas.setId_encuesta(jsonObject.optInt("id_encuesta"));
-                            encuestas.setNombre_encuesta(jsonObject.optString("nomb_encta"));
-                            encuestass.add(encuestas);
-                        }
-                    }else{
-                        validates = new ArrayList<>();
-                        for (int i = 0; i < json.length(); i++) {
-
-                            validate = new validate();
-                            JSONObject jsonObject = null;
-                            jsonObject = json.getJSONObject(i);
-
-                            validate.setId(jsonObject.optInt("id_encuesta"));
-                            validate.setNombre(jsonObject.optString("nomb_encta"));
-                            validates.add(validate);
-                        }
-
-                        if(validates.size()!=encuestass.size()){
-                            if(validates.size()>encuestass.size()){
-                                int numero_agregar= validates.size()-encuestass.size();
-                                int numero_encuestas= encuestass.size();
-
-                                progreso = new ProgressDialog(context);
-                                progreso.setMessage("Agregando datos...");
-                                progreso.show();
-
-                                for (int i=0; i<numero_agregar; i++){
-                                    //Toast.makeText(getApplicationContext(), "Hay que agregar el s: "+ validates.get(numero_encuestas+i).getId().toString() + " - " + validates.get(numero_encuestas+i).getNombre(), Toast.LENGTH_SHORT).show();
-                                    encuestas = new Encuestas();
-                                    encuestas.setId_encuesta(validates.get(numero_encuestas+i).getId());
-                                    encuestas.setNombre_encuesta(validates.get(numero_encuestas+i).getNombre());
-                                    encuestass.add(encuestas);
-                                }
-                                progreso.dismiss();
-                                Toast.makeText(getApplicationContext(), "Se agregaron  "+ String.valueOf(numero_agregar)+ " encuestas.", Toast.LENGTH_SHORT).show();
-                            }
-                        }
-                    }
-
-                    obtenerList();
-
-                }catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-
-                Toast.makeText(context, "Error webservice. \n"+
-                        "No hay conexion con la base de datos.", Toast.LENGTH_SHORT).show();
-                btnEnvio.setEnabled(false);
-            }
-        });
-            request.add(jsonObjectRequest);
-    }
 
     private void obtenerList() {
         listaEventos = new ArrayList<String>();
@@ -512,7 +610,7 @@ public class MainActivity extends AppCompatActivity {
             listaEventos.add(/*encuestass.get(i).getId_encuesta() + " - " +*/ encuestass.get(i).getNombre_encuesta());
         }
 
-        adapter= new ArrayAdapter(this,android.R.layout.simple_spinner_item,listaEventos);
+        adapter= new ArrayAdapter(this, android.R.layout.simple_spinner_item,listaEventos);
         spinner.setAdapter(adapter);
     }
 
@@ -523,13 +621,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void locationStart() {
-        LocationManager mlocManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        Localizacion Local = new Localizacion();
-        Local.setMainActivity(this);
-        gpsEnaDis();
-        onstartGos(mlocManager,Local);
-    }
+
 
     // permisos de ubicacion
     private void onstartGos(LocationManager mlocManager, Localizacion Local) {
@@ -591,80 +683,8 @@ public class MainActivity extends AppCompatActivity {
         dialog.show();
     }
 
-    //Obtiene Direccion
-    public void setLocation(Location loc) {
-        //Obtener la direccion de la calle a partir de la latitud y la longitud
-        if (loc.getLatitude() != 0.0 && loc.getLongitude() != 0.0) {
-            try {
-                Geocoder geocoder = new Geocoder(this, Locale.getDefault());
-                List<Address> list = geocoder.getFromLocation(
-                        loc.getLatitude(), loc.getLongitude(), 1);
-                if (!list.isEmpty()) {
-                    Address DirCalle = list.get(0);
-                    String calle = DirCalle.getAddressLine(0);
-                    direccion.setText(calle);
-                    gps.setEnabled(true);
-                }
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
 
 
-    // CLASE LOCATION
-    public class Localizacion implements LocationListener {
-        MainActivity mainActivity;
-
-        /*public MainActivity getMainActivity() {
-            return mainActivity;
-        }*/
-
-        public void setMainActivity(MainActivity mainActivity) {
-            this.mainActivity = mainActivity;
-        }
-
-        @Override
-        public void onLocationChanged(Location loc) {
-            // Este metodo se ejecuta cada vez que el GPS recibe nuevas coordenadas
-            // debido a la deteccion de un cambio de ubicacion
-
-            String lat = String.valueOf(loc.getLatitude());
-            String lon = String.valueOf(loc.getLongitude());
-            latitude.setText(lat);
-            longitude.setText(lon);
-
-            this.mainActivity.setLocation(loc);
-        }
-
-        @Override
-        public void onProviderDisabled(String provider) {
-            // Este metodo se ejecuta cuando el GPS es desactivado
-        }
-
-        @Override
-        public void onProviderEnabled(String provider) {
-            // Este metodo se ejecuta cuando el GPS es activado
-            Toast.makeText(getApplicationContext(), "Activo",Toast.LENGTH_SHORT).show();
-        }
-
-        @Override
-        public void onStatusChanged(String provider, int status, Bundle extras) {
-            switch (status) {
-                case LocationProvider.AVAILABLE:
-                    Log.d("debug", "LocationProvider.AVAILABLE");
-                    break;
-                case LocationProvider.OUT_OF_SERVICE:
-                    Log.d("debug", "LocationProvider.OUT_OF_SERVICE");
-                    break;
-                case LocationProvider.TEMPORARILY_UNAVAILABLE:
-                    Log.d("debug", "LocationProvider.TEMPORARILY_UNAVAILABLE");
-                    break;
-            }
-        }
-
-    }
 
 
     /**    Dialogs ALERT SALIR **/
