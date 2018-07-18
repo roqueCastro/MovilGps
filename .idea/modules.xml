@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/MovilGps.iml" filepath="$PROJECT_DIR$/MovilGps.iml" />
+      <module fileurl="file://C:\Users\roque\AndroidStudioProjects\MovilGps\MovilGps.iml" filepath="C:\Users\roque\AndroidStudioProjects\MovilGps\MovilGps.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
     </modules>
   </component>
