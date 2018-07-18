@@ -47,9 +47,7 @@ public class SplashActivity extends AppCompatActivity {
             @Override
             public void run() {
                 if(conexion==1){
-                    Intent o = new Intent().setClass(SplashActivity.this,MensajeTextoActivity.class);
-                    startActivity(o);
-                    finish();
+                    Toast.makeText(getApplicationContext(), "No tienes conexion a internet", Toast.LENGTH_SHORT).show();
                 }else{
                     Intent o = new Intent().setClass(SplashActivity.this,MainActivity.class);
                     startActivity(o);
