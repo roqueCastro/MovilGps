@@ -186,7 +186,7 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
 
                     EditRespuesta.setVisibility(viewInflated.VISIBLE);
                     int posisionRespuesta = position - 1;
-                    String tipoRespuesta = respuestas.get(posisionRespuesta).getTipo_pregunta();
+                    String tipoRespuesta = respuestas.get(posisionRespuesta).getTipo_dato();
 
 
                     if(tipoRespuesta.equals("numerico")){
@@ -216,7 +216,7 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
                 if (spinnerRespuestas.getSelectedItemPosition() != 0) {
 
                     int pos = spinnerRespuestas.getSelectedItemPosition() - 1;
-                    String tipo = respuestas.get(pos).getTipo_pregunta();
+                    String tipo = respuestas.get(pos).getTipo_dato();
 
                     if (tipo.equals("numerico") || tipo.equals("texto")) {
 
@@ -323,6 +323,7 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
                                 respuesta.setId_resp(jsonObject.optInt("id_rpta"));
                                 respuesta.setNombre_resp(jsonObject.optString("nomb_rpta"));
                                 respuesta.setTipo_pregunta(jsonObject.optString("tipo_pregunta"));
+                                respuesta.setTipo_dato(jsonObject.optString("tipo_dato"));
                                 respuestas.add(respuesta);
                             }
 

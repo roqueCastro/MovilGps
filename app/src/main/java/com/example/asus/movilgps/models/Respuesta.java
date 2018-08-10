@@ -10,6 +10,9 @@ public class Respuesta {
     private Integer id_resp;
     private String nombre_resp;
     private String tipo_pregunta;
+    private String tipo_dato;
+
+
 
     public Integer getId_resp() {
         return id_resp;
@@ -33,5 +36,12 @@ public class Respuesta {
 
     public void setTipo_pregunta(String tipo_pregunta) {
         this.tipo_pregunta = tipo_pregunta;
+    }
+    public String getTipo_dato() {
+        return tipo_dato;
+    }
+
+    public void setTipo_dato(String tipo_dato) {
+        this.tipo_dato = tipo_dato;
     }
 }

@@ -536,7 +536,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    protected void onActivityResult(int requestCode, int resultCode, Intent data)  {
         super.onActivityResult(requestCode, resultCode, data);
 
         if(requestCode==COD_FOTO || requestCode==COD_SELECIONA)  {
@@ -562,11 +562,10 @@ public class MainActivity extends AppCompatActivity {
                                 });
 
                         bitmap = BitmapFactory.decodeFile(path);
-                        bitmap=redimensionarImagen(bitmap, 700, 450);
                         foto.setImageBitmap(bitmap);
                         break;
                 }
-
+                bitmap=redimensionarImagen(bitmap, 200, 250);
             }
         }
     }
