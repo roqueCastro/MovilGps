@@ -544,7 +544,7 @@ public class MainActivity extends AppCompatActivity {
                 switch (requestCode){
                     case COD_SELECIONA:
                         Uri miPath = data.getData();
-                        foto.setImageURI(miPath);
+
                         try {
                             bitmap = MediaStore.Images.Media.getBitmap(MainActivity.this.getContentResolver(), miPath);
                         } catch (IOException e) {
@@ -562,10 +562,11 @@ public class MainActivity extends AppCompatActivity {
                                 });
 
                         bitmap = BitmapFactory.decodeFile(path);
-                        foto.setImageBitmap(bitmap);
+
                         break;
                 }
-                bitmap=redimensionarImagen(bitmap, 200, 250);
+                bitmap=redimensionarImagen(bitmap, 550, 1100);
+                foto.setImageBitmap(bitmap);
             }
         }
     }
