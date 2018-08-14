@@ -565,7 +565,7 @@ public class MainActivity extends AppCompatActivity {
 
                         break;
                 }
-                bitmap=redimensionarImagen(bitmap, 550, 1100);
+                bitmap=redimensionarImagen(bitmap, 350, 400);
                 foto.setImageBitmap(bitmap);
             }
         }
@@ -583,7 +583,7 @@ public class MainActivity extends AppCompatActivity {
             Matrix matrix = new Matrix();
             matrix.postScale(escalaAncho,escalaAlto);
 
-            return Bitmap.createBitmap(bitmap,0,0, ancho, alto, matrix, false);
+            return Bitmap.createBitmap(bitmap,0,0, ancho, alto, matrix, true);
         }else{
             return bitmap;
         }
