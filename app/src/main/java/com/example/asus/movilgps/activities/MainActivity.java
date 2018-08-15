@@ -565,7 +565,10 @@ public class MainActivity extends AppCompatActivity {
 
                         break;
                 }
-                bitmap=redimensionarImagen(bitmap, 350, 400);
+
+                bitmap=redimensionarImagen(bitmap, 350, 420);
+
+
                 foto.setImageBitmap(bitmap);
             }
         }
