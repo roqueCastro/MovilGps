@@ -96,14 +96,16 @@ public class MainActivity extends AppCompatActivity {
     private final String carpeta_raiz="misImagenes/";
     private final String ruta_imagen=carpeta_raiz+"misFotos";
     String path;
+    String msj;
     Bitmap bitmap;
     int permissionCheck;
+    int timeMensAler;
 
     final long PERIODO = 60000; // 1 minuto
     private Handler handler;
     private Runnable runnable;
 
-    TextView latitude,longitude,direccion;
+    TextView latitude,longitude,direccion, mensajeCon;
     Spinner spinner;
     Button btnEnvio;
     ProgressDialog progreso;
@@ -134,6 +136,7 @@ public class MainActivity extends AppCompatActivity {
         spinner = findViewById(R.id.spinnerSeleEncu);
         btnEnvio = findViewById(R.id.btn_Enviar);
         foto = findViewById(R.id.foto);
+        mensajeCon = findViewById(R.id.TextViewMensajeConfirmacion);
 
         context = MainActivity.this;
         encuestass= new ArrayList<>();
@@ -185,16 +188,27 @@ public class MainActivity extends AppCompatActivity {
                         if(bitmap != null){
                             cargarWebServiceRegistro_Coo_Ima(lat, lon, idEncuesta);
                         }else{
-                            Toast.makeText(context, "Tienes que tomar una foto!..", Toast.LENGTH_SHORT).show();
+                            msj = "Tienes que tomar una foto";
+                            timeMensAler=5000;
+                            mensajeCon.setBackgroundColor(mensajeCon.getContext().getResources().getColor(R.color.amarillo_fuerte));
+                            mensajeCon.setTextColor(mensajeCon.getContext().getResources().getColor(R.color.black));
+                            mensajeAlertaTextView(msj,timeMensAler);
                         }
 
                     }else{
-                        Toast.makeText(context, "Espera a que cargue las coordenadas", Toast.LENGTH_SHORT).show();
+                        msj = "Espera mientras carga las coordenadas";
+                        timeMensAler=5000;
+                        mensajeCon.setBackgroundColor(mensajeCon.getContext().getResources().getColor(R.color.amarillo_fuerte));
+                        mensajeCon.setTextColor(mensajeCon.getContext().getResources().getColor(R.color.black));
+                        mensajeAlertaTextView(msj,timeMensAler);
                     }
 
                 }else{
-                    Toast.makeText(context, "Tienes que seleccionar un evento", Toast.LENGTH_SHORT).show();
-                    spinner.setFocusable(true);
+                    msj = "Tienes que seleccionar un evento";
+                    timeMensAler=3000;
+                    mensajeCon.setBackgroundColor(mensajeCon.getContext().getResources().getColor(R.color.amarillo_fuerte));
+                    mensajeCon.setTextColor(mensajeCon.getContext().getResources().getColor(R.color.black));
+                    mensajeAlertaTextView(msj,timeMensAler);
                 }
             }
         });
@@ -209,6 +223,21 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+    }
+    /*---------------------MENSAJES DE ALERTAS PARA EL SISTEMA---------------------*/
+    private void mensajeAlertaTextView(String msj, int timeMensAler) {
+        mensajeCon.setText(msj);
+        mensajeCon.setVisibility(View.VISIBLE);
+        esconderMensaje(timeMensAler);
+    }
+
+    private void esconderMensaje(int timeMensAler) {
+        new android.os.Handler().postDelayed(
+                new Runnable() {
+                    public void run() {
+                       mensajeCon.setVisibility(View.INVISIBLE);
+                    }
+                }, timeMensAler);
     }
 
     /*----------------ALL WEBSERVICE-----------------------*/
@@ -306,7 +335,17 @@ public class MainActivity extends AppCompatActivity {
                 progreso.hide();
 
                 if(response.trim().equalsIgnoreCase("Noregistra")){
-                    Toast.makeText(context,"No registro ocurrio un error ", Toast.LENGTH_SHORT).show();
+                    msj = "Error no registro...";
+                    timeMensAler=4000;
+                    mensajeCon.setBackgroundColor(mensajeCon.getContext().getResources().getColor(R.color.rojo));
+                    mensajeCon.setTextColor(mensajeCon.getContext().getResources().getColor(R.color.black));
+                    mensajeAlertaTextView(msj,timeMensAler);
+                }else if(response.trim().equalsIgnoreCase("ErrorBaseDatos")){
+                    msj = "Error en la Insercion...";
+                    timeMensAler=4000;
+                    mensajeCon.setBackgroundColor(mensajeCon.getContext().getResources().getColor(R.color.rojo));
+                    mensajeCon.setTextColor(mensajeCon.getContext().getResources().getColor(R.color.black));
+                    mensajeAlertaTextView(msj,timeMensAler);
                 }else{
                     String idEvento= response.toString();
                     Intent i = new Intent(MainActivity.this, PreguntasActivity.class);
@@ -320,7 +359,11 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onErrorResponse(VolleyError error) {
                 progreso.hide();
-                Toast.makeText(context,"Ocurrio un error en el servidor " + error.toString(), Toast.LENGTH_SHORT).show();
+                msj = "Servidor lento error al enviar datos";
+                timeMensAler=5000;
+                mensajeCon.setBackgroundColor(mensajeCon.getContext().getResources().getColor(R.color.rojo));
+                mensajeCon.setTextColor(mensajeCon.getContext().getResources().getColor(R.color.black));
+                mensajeAlertaTextView(msj,timeMensAler);
                 Log.i("Error", error.toString());
             }
         }){

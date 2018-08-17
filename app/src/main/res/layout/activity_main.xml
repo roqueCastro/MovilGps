@@ -11,6 +11,17 @@
         android:layout_height="match_parent"
         android:orientation="vertical"
         >
+        <TextView
+            android:id="@+id/TextViewMensajeConfirmacion"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:background="@color/verde_oscuro"
+            android:text="Hola"
+            style="@style/styleMensajeAlert"
+            android:visibility="invisible"
+            />
 
         <TextView
             android:layout_width="match_parent"

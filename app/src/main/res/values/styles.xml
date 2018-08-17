@@ -13,5 +13,9 @@
         <item name="android:textColorPrimary">@color/iron</item>
         <item name="android:background">@color/white</item>
     </style>
+    <style name="styleMensajeAlert">
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">16sp</item>
+    </style>
 
 </resources>

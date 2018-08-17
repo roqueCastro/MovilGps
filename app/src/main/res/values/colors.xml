@@ -17,4 +17,7 @@
 
 
     <color name="verde_claro">#6FE60C</color>
+    <color name="verde_oscuro">#25982D</color>
+    <color name="amarillo_fuerte">#FFFF00</color>
+    <color name="rojo">#FE0013</color>
 </resources>
