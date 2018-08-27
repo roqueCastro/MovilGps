@@ -312,9 +312,11 @@ public class MainActivity extends AppCompatActivity {
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-
-                Toast.makeText(context, "Error webservice. \n"+
-                        "No hay conexion con la base de datos.", Toast.LENGTH_SHORT).show();
+                msj = "Error no hay conexion con la base de datos";
+                timeMensAler=5000;
+                mensajeCon.setBackgroundColor(mensajeCon.getContext().getResources().getColor(R.color.rojo));
+                mensajeCon.setTextColor(mensajeCon.getContext().getResources().getColor(R.color.black));
+                mensajeAlertaTextView(msj,timeMensAler);
                 btnEnvio.setEnabled(false);
             }
         });
@@ -415,7 +417,7 @@ public class MainActivity extends AppCompatActivity {
             latitude.setText(lat);
             longitude.setText(lon);
 
-            this.mainActivity.setLocation(loc);
+      //      this.mainActivity.setLocation(loc);
         }
 
         @Override
