@@ -325,8 +325,15 @@ public class MainActivity extends AppCompatActivity {
 
     private void cargarWebServiceRegistro_Coo_Ima(final String latitude, final String longitude, final String idEncuesta) {
 
+        msj = "Registrando...";
+        timeMensAler=4000;
+        mensajeCon.setBackgroundColor(mensajeCon.getContext().getResources().getColor(R.color.amarillo_fuerte));
+        mensajeCon.setTextColor(mensajeCon.getContext().getResources().getColor(R.color.black));
+        mensajeAlertaTextView(msj,timeMensAler);
+
         progreso= new ProgressDialog(context);
         progreso.setMessage("Enviando datos..");
+        btnEnvio.setEnabled(false);
         progreso.show();
 
         String url = Utilidades_Request.HTTP+Utilidades_Request.IP+Utilidades_Request.CARPETA+"wsJSONRegistroEvento.php?";
@@ -335,7 +342,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onResponse(String response) {
                 progreso.hide();
-
+                btnEnvio.setEnabled(true);
                 if(response.trim().equalsIgnoreCase("Noregistra")){
                     msj = "Error no registro...";
                     timeMensAler=4000;
@@ -367,6 +374,7 @@ public class MainActivity extends AppCompatActivity {
                 mensajeCon.setTextColor(mensajeCon.getContext().getResources().getColor(R.color.black));
                 mensajeAlertaTextView(msj,timeMensAler);
                 Log.i("Error", error.toString());
+                btnEnvio.setEnabled(true);
             }
         }){
             @Override
