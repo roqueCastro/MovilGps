@@ -3,24 +3,27 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="80dp"
-    android:background="#F9F6F6"
+    android:background="@color/fondoSplash"
     android:paddingRight="15dp"
     android:paddingLeft="15dp"
     android:orientation="vertical">
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="40dp"
+        android:layout_height="wrap_content"
         android:background="#F9F6F6"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingTop="7dp">
+
+        >
 
         <TextView
             android:id="@+id/textViewPregunta"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="4"
+            android:background="@color/fondoSplash"
+            android:textColor="@color/black"
             android:text="TextView"
             android:textSize="18dp" />
     </LinearLayout>
@@ -28,5 +31,5 @@
         android:layout_marginTop="10dp"
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="@color/colorAccent"/>
+        android:background="@color/colorPrimary"/>
 </LinearLayout>

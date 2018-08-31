@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/fondoSplash"
     tools:context="com.example.asus.movilgps.activities.MensajeTextoActivity">
 
 
@@ -21,6 +22,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textSize="60dp"
+                android:textColor="@color/colorPrimary"
                 android:gravity="center_horizontal"
                 android:text="Mensaje"
                 />
@@ -28,6 +30,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
+                android:textColor="@color/black"
                 android:text="En esta ventana puedes enviarle un mensaje.
 Segun al evento o actividad que quieras reportar en la parte de abajo aparece el numero telefonico
 donde a ese numero segun tu evento podras enviarle un mensaje.
@@ -44,13 +47,16 @@ EN LA PARTE DEL TITULO HAY UN ICONO DE CELULAR SI LO DESEA LLAMAR."
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="2"
+                    android:textColor="@color/black"
                     android:text="Telefono:"
                     android:textSize="18dp"
                     android:textStyle="bold"
                     />
                 <TextView
+                    android:id="@+id/TextViewTelefono"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:textColor="@color/black"
                     android:layout_weight="5"
                     android:textSize="18dp"
                     android:text="(Desconocido)"/>
@@ -67,15 +73,19 @@ EN LA PARTE DEL TITULO HAY UN ICONO DE CELULAR SI LO DESEA LLAMAR."
             >
 
             <EditText
+                android:id="@+id/EditTextSms"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="7"/>
 
             <ImageButton
+                android:id="@+id/ImageButtonSms"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
+                android:background="@color/colorPrimary"
                 android:layout_weight="1"
+                android:onClick="EnviarMensaje"
                 android:src="@drawable/ic_send"
 
                 />

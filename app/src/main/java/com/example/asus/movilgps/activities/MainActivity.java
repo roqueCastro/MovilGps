@@ -60,6 +60,7 @@ import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.example.asus.movilgps.R;
 import com.example.asus.movilgps.Utilidades.Utilidades_Request;
+import com.example.asus.movilgps.models.Contacto;
 import com.example.asus.movilgps.models.Encuestas;
 import com.example.asus.movilgps.models.validate;
 
@@ -85,7 +86,8 @@ import static android.support.v4.content.FileProvider.getUriForFile;
 import static java.security.AccessController.getContext;
 
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements Response.Listener<JSONObject>,
+        Response.ErrorListener{
 
     private static final int INTERVALO = 2000; //2 segundos para salir
     private long tiempoPrimerClick;
@@ -93,7 +95,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int COD_FOTO = 20;
     private static final int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 1 ;
 
-    private final String carpeta_raiz="misImagenes/";
+    private final String carpeta_raiz="AppSig/";
     private final String ruta_imagen=carpeta_raiz+"misFotos";
     String path;
     String msj;
@@ -120,6 +122,7 @@ public class MainActivity extends AppCompatActivity {
 
     ArrayList<String> listaEventos;
     ArrayList<Encuestas> encuestass;
+    ArrayList<Contacto> contactos;
     ArrayList<validate> validates;
     ArrayAdapter<CharSequence> adapter;
     StringRequest stringRequest;
@@ -140,6 +143,7 @@ public class MainActivity extends AppCompatActivity {
 
         context = MainActivity.this;
         encuestass= new ArrayList<>();
+        contactos= new ArrayList<>();
         request = Volley.newRequestQueue(getApplicationContext());
         btnEnvio.setEnabled(false);
         permissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
@@ -190,24 +194,24 @@ public class MainActivity extends AppCompatActivity {
                         }else{
                             msj = "Tienes que tomar una foto";
                             timeMensAler=5000;
-                            mensajeCon.setBackgroundColor(mensajeCon.getContext().getResources().getColor(R.color.amarillo_fuerte));
-                            mensajeCon.setTextColor(mensajeCon.getContext().getResources().getColor(R.color.black));
+                            mensajeCon.setBackgroundColor(mensajeCon.getContext().getResources().getColor(R.color.colorAccent));
+                            mensajeCon.setTextColor(mensajeCon.getContext().getResources().getColor(R.color.colorPrimaryDark));
                             mensajeAlertaTextView(msj,timeMensAler);
                         }
 
                     }else{
                         msj = "Espera mientras carga las coordenadas";
                         timeMensAler=5000;
-                        mensajeCon.setBackgroundColor(mensajeCon.getContext().getResources().getColor(R.color.amarillo_fuerte));
-                        mensajeCon.setTextColor(mensajeCon.getContext().getResources().getColor(R.color.black));
+                        mensajeCon.setBackgroundColor(mensajeCon.getContext().getResources().getColor(R.color.colorAccent));
+                        mensajeCon.setTextColor(mensajeCon.getContext().getResources().getColor(R.color.colorPrimaryDark));
                         mensajeAlertaTextView(msj,timeMensAler);
                     }
 
                 }else{
                     msj = "Tienes que seleccionar un evento";
                     timeMensAler=3000;
-                    mensajeCon.setBackgroundColor(mensajeCon.getContext().getResources().getColor(R.color.amarillo_fuerte));
-                    mensajeCon.setTextColor(mensajeCon.getContext().getResources().getColor(R.color.black));
+                    mensajeCon.setBackgroundColor(mensajeCon.getContext().getResources().getColor(R.color.colorAccent));
+                    mensajeCon.setTextColor(mensajeCon.getContext().getResources().getColor(R.color.colorPrimaryDark));
                     mensajeAlertaTextView(msj,timeMensAler);
                 }
             }
@@ -314,8 +318,8 @@ public class MainActivity extends AppCompatActivity {
             public void onErrorResponse(VolleyError error) {
                 msj = "Error no hay conexion con la base de datos";
                 timeMensAler=5000;
-                mensajeCon.setBackgroundColor(mensajeCon.getContext().getResources().getColor(R.color.rojo));
-                mensajeCon.setTextColor(mensajeCon.getContext().getResources().getColor(R.color.black));
+                mensajeCon.setBackgroundColor(mensajeCon.getContext().getResources().getColor(R.color.colorPrimaryDark));
+                mensajeCon.setTextColor(mensajeCon.getContext().getResources().getColor(R.color.white));
                 mensajeAlertaTextView(msj,timeMensAler);
                 btnEnvio.setEnabled(false);
             }
@@ -323,12 +327,58 @@ public class MainActivity extends AppCompatActivity {
         request.add(jsonObjectRequest);
     }
 
+    private void cargarWebServiceContacto(String idEncuesta) {
+
+        String url = Utilidades_Request.HTTP+Utilidades_Request.IP+Utilidades_Request.CARPETA+"wsJSONConsultaContactos.php";
+
+        jsonObjectRequest = new JsonObjectRequest(Request.Method.GET,url,null,this,this);
+        request.add(jsonObjectRequest);
+    }
+
+    @Override
+    public void onErrorResponse(VolleyError error) {
+        Toast.makeText(getApplicationContext(), "Error al cargar los contactos", Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onResponse(JSONObject response) {
+        JSONArray json = response.optJSONArray("contacto");
+
+        Contacto contacto= null;
+        int c=0;
+        try {
+
+            for (int i = 0; i < json.length(); i++) {
+                contacto = new Contacto();
+                JSONObject jsonObject = null;
+
+                jsonObject = json.getJSONObject(i);
+                if (contactos.size() != 0){
+                    contactos.clear();
+                }
+                if (jsonObject.optInt("id_contacto") == 0) {
+                    Toast.makeText(getApplicationContext(), "vacio", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(getApplicationContext(), "lleno numero: "+i, Toast.LENGTH_SHORT).show();
+                  /*  contacto.setId_contac(jsonObject.optInt("id_contacto"));
+                    contacto.setTelefono(jsonObject.optString("telefono"));
+                    contactos.add(contacto);*/
+                }
+            }
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+            Toast.makeText(getApplicationContext(),"No se a podido tener conexion con el servidor " , Toast.LENGTH_SHORT).show();
+            progreso.hide();
+        }
+    }
+
     private void cargarWebServiceRegistro_Coo_Ima(final String latitude, final String longitude, final String idEncuesta) {
 
         msj = "Registrando...";
         timeMensAler=4000;
-        mensajeCon.setBackgroundColor(mensajeCon.getContext().getResources().getColor(R.color.amarillo_fuerte));
-        mensajeCon.setTextColor(mensajeCon.getContext().getResources().getColor(R.color.black));
+        mensajeCon.setBackgroundColor(mensajeCon.getContext().getResources().getColor(R.color.colorAccent));
+        mensajeCon.setTextColor(mensajeCon.getContext().getResources().getColor(R.color.colorPrimaryDark));
         mensajeAlertaTextView(msj,timeMensAler);
 
         progreso= new ProgressDialog(context);
@@ -346,16 +396,17 @@ public class MainActivity extends AppCompatActivity {
                 if(response.trim().equalsIgnoreCase("Noregistra")){
                     msj = "Error no registro...";
                     timeMensAler=4000;
-                    mensajeCon.setBackgroundColor(mensajeCon.getContext().getResources().getColor(R.color.rojo));
-                    mensajeCon.setTextColor(mensajeCon.getContext().getResources().getColor(R.color.black));
+                    mensajeCon.setBackgroundColor(mensajeCon.getContext().getResources().getColor(R.color.colorPrimaryDark));
+                    mensajeCon.setTextColor(mensajeCon.getContext().getResources().getColor(R.color.white));
                     mensajeAlertaTextView(msj,timeMensAler);
                 }else if(response.trim().equalsIgnoreCase("ErrorBaseDatos")){
                     msj = "Error en la Insercion...";
                     timeMensAler=4000;
-                    mensajeCon.setBackgroundColor(mensajeCon.getContext().getResources().getColor(R.color.rojo));
-                    mensajeCon.setTextColor(mensajeCon.getContext().getResources().getColor(R.color.black));
+                    mensajeCon.setBackgroundColor(mensajeCon.getContext().getResources().getColor(R.color.colorPrimaryDark));
+                    mensajeCon.setTextColor(mensajeCon.getContext().getResources().getColor(R.color.white));
                     mensajeAlertaTextView(msj,timeMensAler);
                 }else{
+                    cargarWebServiceContacto(idEncuesta);
                     String idEvento= response.toString();
                     Intent i = new Intent(MainActivity.this, PreguntasActivity.class);
                     i.putExtra("idEncuesta", idEncuesta);
@@ -370,8 +421,8 @@ public class MainActivity extends AppCompatActivity {
                 progreso.hide();
                 msj = "Servidor lento error al enviar datos";
                 timeMensAler=5000;
-                mensajeCon.setBackgroundColor(mensajeCon.getContext().getResources().getColor(R.color.rojo));
-                mensajeCon.setTextColor(mensajeCon.getContext().getResources().getColor(R.color.black));
+                mensajeCon.setBackgroundColor(mensajeCon.getContext().getResources().getColor(R.color.colorPrimaryDark));
+                mensajeCon.setTextColor(mensajeCon.getContext().getResources().getColor(R.color.white));
                 mensajeAlertaTextView(msj,timeMensAler);
                 Log.i("Error", error.toString());
                 btnEnvio.setEnabled(true);
@@ -402,6 +453,8 @@ public class MainActivity extends AppCompatActivity {
         gpsEnaDis();
         onstartGos(mlocManager,Local);
     }
+
+
 
     // CLASE LOCATION
     public class Localizacion implements LocationListener {
