@@ -33,7 +33,7 @@
                 android:textColor="@color/black"
                 android:text="En esta ventana puedes enviarle un mensaje.
 Segun al evento o actividad que quieras reportar en la parte de abajo aparece el numero telefonico
-donde a ese numero segun tu evento podras enviarle un mensaje.
+donde a ese numero segun tu evento podras enviarle un mensaje de texto.
 Esto es solo en caso de no tener conexión a internet.
 EN LA PARTE DEL TITULO HAY UN ICONO DE CELULAR SI LO DESEA LLAMAR."
                 />
@@ -60,6 +60,10 @@ EN LA PARTE DEL TITULO HAY UN ICONO DE CELULAR SI LO DESEA LLAMAR."
                     android:layout_weight="5"
                     android:textSize="18dp"
                     android:text="(Desconocido)"/>
+                <Spinner
+                    android:id="@+id/SpinnerNumTel"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
 
             </LinearLayout>
         </LinearLayout>

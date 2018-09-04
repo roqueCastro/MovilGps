@@ -2,13 +2,17 @@ package com.example.asus.movilgps.activities;
 
 import android.Manifest;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.telephony.SmsManager;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -16,6 +20,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.asus.movilgps.R;
+import com.example.asus.movilgps.models.Contacto;
+
+import io.realm.Realm;
+import io.realm.RealmResults;
 
 public class MensajeTextoActivity extends AppCompatActivity {
 
@@ -24,11 +32,20 @@ public class MensajeTextoActivity extends AppCompatActivity {
     TextView tel;
     EditText sms;
     ImageButton envioSms;
+//    Realm
+    private Realm realm;
+    private RealmResults<Contacto> contactos;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_mensaje_texto);
+
+//        Inicializar real
+        realm =Realm.getDefaultInstance();
+        contactos = realm.where(Contacto.class).findAll();
+
+//        Telefono
         tel = findViewById(R.id.TextViewTelefono);
         sms = findViewById(R.id.EditTextSms);
         envioSms = findViewById(R.id.ImageButtonSms);
@@ -82,6 +99,22 @@ public class MensajeTextoActivity extends AppCompatActivity {
     }
 
 
+    private void llamar() {
+        Intent intent=null;
+        intent = new Intent(Intent.ACTION_CALL);
+        intent.setData(Uri.parse("tel:3219368149"));
+        if (ActivityCompat.checkSelfPermission(getBaseContext(), Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(MensajeTextoActivity.this, new String[]{Manifest.permission.CALL_PHONE}, 105);
+        } else {
+            startActivity(intent);
+            //finish();
+        }
+
+    }
+
+
+
+
     @Override
     public void onBackPressed() {
         if (tiempoPrimerClick + INTERVALO > System.currentTimeMillis()){
@@ -94,5 +127,23 @@ public class MensajeTextoActivity extends AppCompatActivity {
         }
         tiempoPrimerClick = System.currentTimeMillis();
 
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_activity_sms, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()){
+            case R.id.phone:
+                Toast.makeText(getApplicationContext(),"llamando", Toast.LENGTH_SHORT).show();
+                //cargarwebservice();
+                // startActivity(getIntent());
+                break;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }

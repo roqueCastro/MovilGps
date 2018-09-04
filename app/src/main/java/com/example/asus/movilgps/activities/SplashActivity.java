@@ -19,26 +19,14 @@ import java.util.TimerTask;
 public class SplashActivity extends AppCompatActivity {
 
     public  static int conexion = 0;
-    private static  final long SPLASH_SCREEN_DELAY = 5000;
+    private static  final long SPLASH_SCREEN_DELAY = 3000;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
 
-        SharedPreferences prefe=getApplicationContext().getSharedPreferences("datos",Context.MODE_PRIVATE);
-        String splash =  prefe.getString("login","");
 
-        if(splash != ""){
-            Intent o = new Intent().setClass(SplashActivity.this,MainActivity.class);
-            startActivity(o);
-            finish();
-        }
-        SharedPreferences preferencias=getApplicationContext().getSharedPreferences("datos",Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor=preferencias.edit();
-        editor.putString("login", "1");
-        editor.commit();
-
-         if(compruebaOnlineNet()==false) {
+        if(compruebaOnlineNet()==false) {
             conexion=1;
         }else{
              conexion=0;
