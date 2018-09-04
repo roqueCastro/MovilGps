@@ -14,27 +14,34 @@ import android.telephony.SmsManager;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.asus.movilgps.R;
+import com.example.asus.movilgps.adapters.ContactoAdapter;
 import com.example.asus.movilgps.models.Contacto;
 
 import io.realm.Realm;
+import io.realm.RealmChangeListener;
 import io.realm.RealmResults;
 
-public class MensajeTextoActivity extends AppCompatActivity {
+public class MensajeTextoActivity extends AppCompatActivity{
 
     private static final int INTERVALO = 2000; //2 segundos para salir
     private long tiempoPrimerClick;
     TextView tel;
     EditText sms;
     ImageButton envioSms;
+    Spinner spinnerCont;
 //    Realm
     private Realm realm;
     private RealmResults<Contacto> contactos;
+    private ContactoAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,32 +56,44 @@ public class MensajeTextoActivity extends AppCompatActivity {
         tel = findViewById(R.id.TextViewTelefono);
         sms = findViewById(R.id.EditTextSms);
         envioSms = findViewById(R.id.ImageButtonSms);
+        spinnerCont = findViewById(R.id.SpinnerNumTel);
+
+        adapter= new ContactoAdapter(this,contactos,R.layout.spinner_view_contacto);
+        spinnerCont.setAdapter(adapter);
+
+        spinnerCont.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener()
+        {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+               tel.setText(contactos.get(position).getTelefono().toString());
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
     }
 
     public void EnviarMensaje(View view){
         String numT = tel.getText().toString();
         String datEnvio = sms.getText().toString();
-        if (numT != null || datEnvio != null){
 
-            try {
-                int  permissionCheck = ContextCompat.checkSelfPermission(
-                        this, Manifest.permission.SEND_SMS);
-                if(permissionCheck != PackageManager.PERMISSION_GRANTED){
-                    Toast.makeText(getApplicationContext(), "No tienes permiso para enviar mensaje de texto", Toast.LENGTH_SHORT).show();
-                    ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.SEND_SMS}, 225);
-                }
-
-                SmsManager mensj = SmsManager.getDefault();
-                mensj.sendTextMessage(numT, numT, datEnvio,null, null);
-                Toast.makeText(getApplicationContext()," Mensaje enviado!", Toast.LENGTH_SHORT).show();
-
-            }catch (Exception e){
-                Toast.makeText(getApplicationContext()," Mensaje no enviado. Verifica permisos o datos!", Toast.LENGTH_SHORT).show();
-                e.printStackTrace();
+        try {
+            int  permissionCheck = ContextCompat.checkSelfPermission(
+                    this, Manifest.permission.SEND_SMS);
+            if(permissionCheck != PackageManager.PERMISSION_GRANTED){
+                Toast.makeText(getApplicationContext(), "No tienes permiso para enviar mensaje de texto", Toast.LENGTH_SHORT).show();
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.SEND_SMS}, 225);
             }
 
-        }else{
-            Toast.makeText(getApplicationContext()," Verifica si llego el numero telefonico o escribir un sms!.", Toast.LENGTH_SHORT).show();
+            SmsManager mensj = SmsManager.getDefault();
+            mensj.sendTextMessage(numT, numT, datEnvio,null, null);
+            Toast.makeText(getApplicationContext()," Mensaje enviado!", Toast.LENGTH_SHORT).show();
+
+        }catch (Exception e){
+            Toast.makeText(getApplicationContext()," Mensaje no enviado. Verifica permisos o datos!", Toast.LENGTH_SHORT).show();
+            e.printStackTrace();
         }
     }
 
@@ -99,10 +118,10 @@ public class MensajeTextoActivity extends AppCompatActivity {
     }
 
 
-    private void llamar() {
+    private void llamar(String numero) {
         Intent intent=null;
         intent = new Intent(Intent.ACTION_CALL);
-        intent.setData(Uri.parse("tel:3219368149"));
+        intent.setData(Uri.parse(numero));
         if (ActivityCompat.checkSelfPermission(getBaseContext(), Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(MensajeTextoActivity.this, new String[]{Manifest.permission.CALL_PHONE}, 105);
         } else {
@@ -139,7 +158,9 @@ public class MensajeTextoActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()){
             case R.id.phone:
-                Toast.makeText(getApplicationContext(),"llamando", Toast.LENGTH_SHORT).show();
+                String numero = "tel:"+tel.getText().toString();
+
+                llamar(numero);
                 //cargarwebservice();
                 // startActivity(getIntent());
                 break;

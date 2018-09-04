@@ -62,8 +62,10 @@ EN LA PARTE DEL TITULO HAY UN ICONO DE CELULAR SI LO DESEA LLAMAR."
                     android:text="(Desconocido)"/>
                 <Spinner
                     android:id="@+id/SpinnerNumTel"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="4"
+                    />
 
             </LinearLayout>
         </LinearLayout>

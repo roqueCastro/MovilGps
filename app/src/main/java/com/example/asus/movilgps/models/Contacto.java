@@ -21,10 +21,9 @@ public class Contacto extends RealmObject {
     private  String telefono;
 
     public Contacto(){
-
     }
 
-    public Contacto(int id, String encuesta, String telefono) {
+    public Contacto(String encuesta, String telefono) {
         this.id = MyApplication.ContactoID.incrementAndGet();
         this.encuesta = encuesta;
         this.telefono = telefono;

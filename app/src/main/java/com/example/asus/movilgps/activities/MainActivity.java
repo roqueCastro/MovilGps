@@ -80,6 +80,9 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.logging.LogRecord;
 
+import io.realm.Realm;
+import io.realm.RealmResults;
+
 import static android.Manifest.permission.CAMERA;
 import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
 import static android.support.v4.content.FileProvider.getUriForFile;
@@ -122,15 +125,23 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
 
     ArrayList<String> listaEventos;
     ArrayList<Encuestas> encuestass;
-    ArrayList<Contacto> contactos;
     ArrayList<validate> validates;
     ArrayAdapter<CharSequence> adapter;
     StringRequest stringRequest;
+
+//    Realm
+    private Realm realm;
+    private RealmResults<Contacto> contactos;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+//      BD realm
+        realm = Realm.getDefaultInstance();
+        contactos = realm.where(Contacto.class).findAll();
 
         gps = findViewById(R.id.fabGps);
         latitude = findViewById(R.id.TextLatitud);
@@ -143,7 +154,6 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
 
         context = MainActivity.this;
         encuestass= new ArrayList<>();
-        contactos= new ArrayList<>();
         request = Volley.newRequestQueue(getApplicationContext());
         btnEnvio.setEnabled(false);
         permissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
@@ -344,25 +354,20 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
     public void onResponse(JSONObject response) {
         JSONArray json = response.optJSONArray("contacto");
 
-        Contacto contacto= null;
-        int c=0;
+       if(contactos.size()==0){
+           deleteAll();
+       }
         try {
 
             for (int i = 0; i < json.length(); i++) {
-                contacto = new Contacto();
                 JSONObject jsonObject = null;
 
                 jsonObject = json.getJSONObject(i);
-                if (contactos.size() != 0){
-                    contactos.clear();
-                }
+
                 if (jsonObject.optInt("id_contacto") == 0) {
                     Toast.makeText(getApplicationContext(), "vacio", Toast.LENGTH_SHORT).show();
                 } else {
-                    Toast.makeText(getApplicationContext(), "lleno numero: "+i, Toast.LENGTH_SHORT).show();
-                  /*  contacto.setId_contac(jsonObject.optInt("id_contacto"));
-                    contacto.setTelefono(jsonObject.optString("telefono"));
-                    contactos.add(contacto);*/
+                    insertContacto(jsonObject.optString("nomb_encta"),jsonObject.optString("telefono"));
                 }
             }
 
@@ -442,6 +447,21 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
             }
         };
         request.add(stringRequest);
+    }
+
+    /*-------------CRUD REALM----------------*/
+
+    private void deleteAll() {
+        realm.beginTransaction();
+        realm.deleteAll();
+        realm.commitTransaction();
+    }
+
+    private void insertContacto(String encuesta, String telefono) {
+        realm.beginTransaction();
+        Contacto contacto = new Contacto(encuesta,telefono);
+        realm.copyToRealm(contacto);
+        realm.commitTransaction();
     }
 
     /*-------------LOCATION GPS----------------*/
