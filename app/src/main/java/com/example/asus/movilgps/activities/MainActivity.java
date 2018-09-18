@@ -131,6 +131,7 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
 
 //    Realm
     private Realm realm;
+    private Contacto contacto;
     private RealmResults<Contacto> contactos;
 
 
@@ -142,6 +143,7 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
 //      BD realm
         realm = Realm.getDefaultInstance();
         contactos = realm.where(Contacto.class).findAll();
+
 
         gps = findViewById(R.id.fabGps);
         latitude = findViewById(R.id.TextLatitud);
@@ -354,8 +356,8 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
     public void onResponse(JSONObject response) {
         JSONArray json = response.optJSONArray("contacto");
 
-       if(contactos.size()==0){
-           deleteAll();
+       if(contactos.size()!=0){
+           deleteAllContacto();
        }
         try {
 
@@ -451,7 +453,7 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
 
     /*-------------CRUD REALM----------------*/
 
-    private void deleteAll() {
+    private void deleteAllContacto() {
         realm.beginTransaction();
         realm.deleteAll();
         realm.commitTransaction();

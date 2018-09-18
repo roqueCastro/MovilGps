@@ -358,13 +358,15 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
     }
 
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        Toast.makeText(context, "clic "+position, Toast.LENGTH_SHORT).show();
         String id_pre = String.valueOf(preguntas.get(position).getId_pre());
         String pregunta = String.valueOf(preguntas.get(position).getNombre_pre());
 
         //showAlertSpinnerRespuestas(pregunta, id_pre, position);
-        if(posision != position){
+        /*if(posision != position){
             posision=position;
             cargarWebServiceRespuestas(id_pre, position, pregunta);
-        }
+        }*/
+        cargarWebServiceRespuestas(id_pre, position, pregunta);
     }
 }
