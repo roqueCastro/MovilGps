@@ -3,6 +3,7 @@ package com.example.asus.movilgps.app;
 import android.app.Application;
 
 import com.example.asus.movilgps.models.Contacto;
+import com.example.asus.movilgps.models.Encuesta;
 import com.example.asus.movilgps.models.usuario;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -20,6 +21,7 @@ public class MyApplication extends Application {
 
     public static AtomicInteger UsuarioID = new AtomicInteger();
     public static AtomicInteger ContactoID = new AtomicInteger();
+    public static AtomicInteger EncuestaID = new AtomicInteger();
 
     @Override
     public void onCreate() {
@@ -30,6 +32,7 @@ public class MyApplication extends Application {
         Realm realm = Realm.getDefaultInstance();
         UsuarioID = getIdByTable(realm, usuario.class);
         ContactoID = getIdByTable(realm, Contacto.class);
+        EncuestaID = getIdByTable(realm, Encuesta.class);
         realm.close();
 
     }

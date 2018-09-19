@@ -60,7 +60,9 @@ import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.example.asus.movilgps.R;
 import com.example.asus.movilgps.Utilidades.Utilidades_Request;
+import com.example.asus.movilgps.adapters.EncuestaAdapter;
 import com.example.asus.movilgps.models.Contacto;
+import com.example.asus.movilgps.models.Encuesta;
 import com.example.asus.movilgps.models.Encuestas;
 import com.example.asus.movilgps.models.validate;
 
@@ -99,12 +101,13 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
     private static final int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 1 ;
 
     private final String carpeta_raiz="AppSig/";
-    private final String ruta_imagen=carpeta_raiz+"misFotos";
+    private final String ruta_imagen=carpeta_raiz+"imagenes";
     String path;
     String msj;
     Bitmap bitmap;
     int permissionCheck;
     int timeMensAler;
+    int selec=0;
 
     final long PERIODO = 60000; // 1 minuto
     private Handler handler;
@@ -126,13 +129,17 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
     ArrayList<String> listaEventos;
     ArrayList<Encuestas> encuestass;
     ArrayList<validate> validates;
-    ArrayAdapter<CharSequence> adapter;
+    private EncuestaAdapter adapter;
     StringRequest stringRequest;
 
 //    Realm
     private Realm realm;
+
     private Contacto contacto;
     private RealmResults<Contacto> contactos;
+
+    private Encuesta encuesta;
+    private RealmResults<Encuesta> encuestas;
 
 
     @Override
@@ -143,6 +150,7 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
 //      BD realm
         realm = Realm.getDefaultInstance();
         contactos = realm.where(Contacto.class).findAll();
+        encuestas = realm.where(Encuesta.class).findAll();
 
 
         gps = findViewById(R.id.fabGps);
@@ -193,10 +201,10 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
             public void onClick(View v) {
                 locationStart();
 
-                final int selec=spinner.getSelectedItemPosition();
-                if(selec!= 0){
 
-                    String idEncuesta = encuestass.get(selec-1).getId_encuesta().toString();
+                if(selec != 0){
+
+                    String idEncuesta = String.valueOf(selec);
                     String lat = latitude.getText().toString();
                     String lon = longitude.getText().toString();
 
@@ -232,6 +240,7 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                selec=encuestas.get(position).getId_encuesta();
             }
 
             @Override
@@ -267,22 +276,18 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
                 // Toast.makeText(getApplicationContext(), response.toString(), Toast.LENGTH_SHORT).show();
 
                 btnEnvio.setEnabled(true);
-                Encuestas encuestas = null;
+
                 validate validate = null;
 
                 JSONArray json = response.optJSONArray("encuesta");
 
                 try {
-                    if(encuestass.size() == 0){
+                    if(encuestas.size() == 0){
                         for (int i = 0; i < json.length(); i++) {
 
-                            encuestas = new Encuestas();
                             JSONObject jsonObject = null;
                             jsonObject = json.getJSONObject(i);
-
-                            encuestas.setId_encuesta(jsonObject.optInt("id_encuesta"));
-                            encuestas.setNombre_encuesta(jsonObject.optString("nomb_encta"));
-                            encuestass.add(encuestas);
+                            insertEncuesta(jsonObject.optInt("id_encuesta"), jsonObject.optString("nomb_encta"));
                         }
                     }else{
                         validates = new ArrayList<>();
@@ -297,10 +302,10 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
                             validates.add(validate);
                         }
 
-                        if(validates.size()!=encuestass.size()){
-                            if(validates.size()>encuestass.size()){
-                                int numero_agregar= validates.size()-encuestass.size();
-                                int numero_encuestas= encuestass.size();
+                        if(validates.size() != encuestas.size()){
+                            if(validates.size() > encuestas.size()){
+                                int numero_agregar= validates.size()-encuestas.size();
+                                int numero_encuestas= encuestas.size();
 
                                 progreso = new ProgressDialog(context);
                                 progreso.setMessage("Agregando datos...");
@@ -308,13 +313,24 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
 
                                 for (int i=0; i<numero_agregar; i++){
                                     //Toast.makeText(getApplicationContext(), "Hay que agregar el s: "+ validates.get(numero_encuestas+i).getId().toString() + " - " + validates.get(numero_encuestas+i).getNombre(), Toast.LENGTH_SHORT).show();
-                                    encuestas = new Encuestas();
-                                    encuestas.setId_encuesta(validates.get(numero_encuestas+i).getId());
-                                    encuestas.setNombre_encuesta(validates.get(numero_encuestas+i).getNombre());
-                                    encuestass.add(encuestas);
+                                    insertEncuesta(validates.get(numero_encuestas+i).getId(), validates.get(numero_encuestas+i).getNombre());
                                 }
                                 progreso.dismiss();
                                 Toast.makeText(getApplicationContext(), "Se agregaron  "+ String.valueOf(numero_agregar)+ " encuestas.", Toast.LENGTH_SHORT).show();
+                            }else if(validates.size() < encuestas.size()){
+                                int numero_eliminar= encuestas.size()-validates.size();
+
+                                for(int i=0; i<numero_eliminar; i++){
+                                    deleteEncuesta(encuestas.get(i));
+                                }
+
+                                Toast.makeText(getApplicationContext(), "Se Eliminaron  "+ String.valueOf(numero_eliminar)+ " encuestas.", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+
+                        for (int i=0; i<encuestas.size(); i++){
+                            if(encuestas.get(i).getId_encuesta() != validates.get(i).getId()){
+                                updateEncuesta(validates.get(i).getId(), validates.get(i).getNombre(), encuestas.get(i));
                             }
                         }
                     }
@@ -357,7 +373,7 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
         JSONArray json = response.optJSONArray("contacto");
 
        if(contactos.size()!=0){
-           deleteAllContacto();
+           deleteAll();
        }
         try {
 
@@ -453,16 +469,44 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
 
     /*-------------CRUD REALM----------------*/
 
-    private void deleteAllContacto() {
+    //DELETE ALL
+    private void deleteAll() {
         realm.beginTransaction();
         realm.deleteAll();
         realm.commitTransaction();
     }
 
+    private void deleteEncuesta(Encuesta encuesta) {
+
+        realm.beginTransaction();
+        encuesta.deleteFromRealm();
+        realm.commitTransaction();
+
+    }
+
+    //INSERT
+
     private void insertContacto(String encuesta, String telefono) {
         realm.beginTransaction();
         Contacto contacto = new Contacto(encuesta,telefono);
         realm.copyToRealm(contacto);
+        realm.commitTransaction();
+    }
+
+    private void  insertEncuesta(int idEnc, String nombEn){
+        realm.beginTransaction();
+        encuesta = new Encuesta(idEnc,nombEn);
+        realm.copyToRealm(encuesta);
+        realm.commitTransaction();
+    }
+
+    //UPDATE
+
+    private void updateEncuesta(int id, String nom, Encuesta encuesta) {
+        realm.beginTransaction();
+        encuesta.setId_encuesta(id);
+        encuesta.setNombre_encuesta(nom);
+        realm.copyToRealmOrUpdate(encuesta);
         realm.commitTransaction();
     }
 
@@ -735,14 +779,7 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
 
 
     private void obtenerList() {
-        listaEventos = new ArrayList<String>();
-
-        listaEventos.add("Seleccione tipo encuesta");
-        for(int i=0; i<encuestass.size(); i++) {
-            listaEventos.add(/*encuestass.get(i).getId_encuesta() + " - " +*/ encuestass.get(i).getNombre_encuesta());
-        }
-
-        adapter= new ArrayAdapter(this, android.R.layout.simple_spinner_item,listaEventos);
+        adapter= new EncuestaAdapter(this,encuestas,R.layout.spinner_view_encuesta);
         spinner.setAdapter(adapter);
     }
 
