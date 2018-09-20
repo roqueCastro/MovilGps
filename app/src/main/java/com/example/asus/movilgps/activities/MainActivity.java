@@ -135,7 +135,6 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
 //    Realm
     private Realm realm;
 
-    private Contacto contacto;
     private RealmResults<Contacto> contactos;
 
     private Encuesta encuesta;
@@ -167,6 +166,8 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
         request = Volley.newRequestQueue(getApplicationContext());
         btnEnvio.setEnabled(false);
         permissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+
+        obtenerList();
 
         cargarwebservice();
         locationStart();
@@ -330,6 +331,99 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
 
                         for (int i=0; i<encuestas.size(); i++){
                             if(encuestas.get(i).getId_encuesta() != validates.get(i).getId()){
+                                updateEncuesta(validates.get(i).getId(), validates.get(i).getNombre(), encuestas.get(i));
+                            }else if(encuestas.get(i).getNombre_encuesta() != validates.get(i).getNombre()){
+                                updateEncuesta(validates.get(i).getId(), validates.get(i).getNombre(), encuestas.get(i));
+                            }
+                        }
+                    }
+
+                    obtenerList();
+                    cargarwebserviceAllPreguntas();
+
+                }catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                msj = "Error no hay conexion con la base de datos";
+                timeMensAler=5000;
+                mensajeCon.setBackgroundColor(mensajeCon.getContext().getResources().getColor(R.color.colorPrimaryDark));
+                mensajeCon.setTextColor(mensajeCon.getContext().getResources().getColor(R.color.white));
+                mensajeAlertaTextView(msj,timeMensAler);
+                btnEnvio.setEnabled(false);
+            }
+        });
+        request.add(jsonObjectRequest);
+    }
+
+    private void cargarwebserviceAllPreguntas() {
+        String url = Utilidades_Request.HTTP + Utilidades_Request.IP + Utilidades_Request.CARPETA + "WSConsultaAllPreguntas.php";
+
+        jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+                // Toast.makeText(getApplicationContext(), response.toString(), Toast.LENGTH_SHORT).show();
+
+                btnEnvio.setEnabled(true);
+
+                validate validate = null;
+
+                JSONArray json = response.optJSONArray("preguntaAll");
+
+                try {
+                    if(encuestas.size() == 0){
+                        for (int i = 0; i < json.length(); i++) {
+
+                            JSONObject jsonObject = null;
+                            jsonObject = json.getJSONObject(i);
+                            insertEncuesta(jsonObject.optInt("id_encuesta"), jsonObject.optString("nomb_encta"));
+                        }
+                    }else{
+                        validates = new ArrayList<>();
+                        for (int i = 0; i < json.length(); i++) {
+
+                            validate = new validate();
+                            JSONObject jsonObject = null;
+                            jsonObject = json.getJSONObject(i);
+
+                            validate.setId(jsonObject.optInt("id_encuesta"));
+                            validate.setNombre(jsonObject.optString("nomb_encta"));
+                            validates.add(validate);
+                        }
+
+                        if(validates.size() != encuestas.size()){
+                            if(validates.size() > encuestas.size()){
+                                int numero_agregar= validates.size()-encuestas.size();
+                                int numero_encuestas= encuestas.size();
+
+                                progreso = new ProgressDialog(context);
+                                progreso.setMessage("Agregando datos...");
+                                progreso.show();
+
+                                for (int i=0; i<numero_agregar; i++){
+                                    //Toast.makeText(getApplicationContext(), "Hay que agregar el s: "+ validates.get(numero_encuestas+i).getId().toString() + " - " + validates.get(numero_encuestas+i).getNombre(), Toast.LENGTH_SHORT).show();
+                                    insertEncuesta(validates.get(numero_encuestas+i).getId(), validates.get(numero_encuestas+i).getNombre());
+                                }
+                                progreso.dismiss();
+                                Toast.makeText(getApplicationContext(), "Se agregaron  "+ String.valueOf(numero_agregar)+ " encuestas.", Toast.LENGTH_SHORT).show();
+                            }else if(validates.size() < encuestas.size()){
+                                int numero_eliminar= encuestas.size()-validates.size();
+
+                                for(int i=0; i<numero_eliminar; i++){
+                                    deleteEncuesta(encuestas.get(i));
+                                }
+
+                                Toast.makeText(getApplicationContext(), "Se Eliminaron  "+ String.valueOf(numero_eliminar)+ " encuestas.", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+
+                        for (int i=0; i<encuestas.size(); i++){
+                            if(encuestas.get(i).getId_encuesta() != validates.get(i).getId()){
+                                updateEncuesta(validates.get(i).getId(), validates.get(i).getNombre(), encuestas.get(i));
+                            }else if(encuestas.get(i).getNombre_encuesta() != validates.get(i).getNombre()){
                                 updateEncuesta(validates.get(i).getId(), validates.get(i).getNombre(), encuestas.get(i));
                             }
                         }
