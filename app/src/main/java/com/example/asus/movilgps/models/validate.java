@@ -8,6 +8,7 @@ public class validate {
     private Integer id;
     private String nombre;
     private Integer tipo;
+    private Integer encuesta2;
 
     public Integer getId() {
         return id;
@@ -31,5 +32,13 @@ public class validate {
 
     public void setTipo(Integer tipo) {
         this.tipo = tipo;
+    }
+
+    public Integer getEncuesta2() {
+        return encuesta2;
+    }
+
+    public void setEncuesta2(Integer encuesta2) {
+        this.encuesta2 = encuesta2;
     }
 }

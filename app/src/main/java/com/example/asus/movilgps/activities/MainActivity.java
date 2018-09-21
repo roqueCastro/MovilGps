@@ -64,6 +64,7 @@ import com.example.asus.movilgps.adapters.EncuestaAdapter;
 import com.example.asus.movilgps.models.Contacto;
 import com.example.asus.movilgps.models.Encuesta;
 import com.example.asus.movilgps.models.Encuestas;
+import com.example.asus.movilgps.models.Pregunta;
 import com.example.asus.movilgps.models.validate;
 
 import org.json.JSONArray;
@@ -125,9 +126,6 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
     RequestQueue request;
     JsonObjectRequest jsonObjectRequest;
 
-
-    ArrayList<String> listaEventos;
-    ArrayList<Encuestas> encuestass;
     ArrayList<validate> validates;
     private EncuestaAdapter adapter;
     StringRequest stringRequest;
@@ -140,6 +138,9 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
     private Encuesta encuesta;
     private RealmResults<Encuesta> encuestas;
 
+    private Pregunta pregunta;
+    private RealmResults<Pregunta> preguntas;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -150,6 +151,7 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
         realm = Realm.getDefaultInstance();
         contactos = realm.where(Contacto.class).findAll();
         encuestas = realm.where(Encuesta.class).findAll();
+        preguntas = realm.where(Pregunta.class).findAll();
 
 
         gps = findViewById(R.id.fabGps);
@@ -162,7 +164,6 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
         mensajeCon = findViewById(R.id.TextViewMensajeConfirmacion);
 
         context = MainActivity.this;
-        encuestass= new ArrayList<>();
         request = Volley.newRequestQueue(getApplicationContext());
         btnEnvio.setEnabled(false);
         permissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
@@ -374,14 +375,18 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
                 JSONArray json = response.optJSONArray("preguntaAll");
 
                 try {
-                    if(encuestas.size() == 0){
+                    if(preguntas.size() == 0){
                         for (int i = 0; i < json.length(); i++) {
 
                             JSONObject jsonObject = null;
                             jsonObject = json.getJSONObject(i);
-                            insertEncuesta(jsonObject.optInt("id_encuesta"), jsonObject.optString("nomb_encta"));
+                            insertPregunta(jsonObject.optInt("id_pgta"),
+                                    jsonObject.optString("nomb_pgta"),
+                                    jsonObject.optInt("tipo_pregunta"),
+                                    jsonObject.optInt("encuesta2"));
                         }
-                    }else{
+                    }
+                    else{
                         validates = new ArrayList<>();
                         for (int i = 0; i < json.length(); i++) {
 
@@ -389,47 +394,53 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
                             JSONObject jsonObject = null;
                             jsonObject = json.getJSONObject(i);
 
-                            validate.setId(jsonObject.optInt("id_encuesta"));
-                            validate.setNombre(jsonObject.optString("nomb_encta"));
+                            validate.setId(jsonObject.optInt("id_pgta"));
+                            validate.setNombre(jsonObject.optString("nomb_pgta"));
+                            validate.setTipo(jsonObject.optInt("tipo_pregunta"));
+                            validate.setEncuesta2(jsonObject.optInt("encuesta2"));
                             validates.add(validate);
                         }
 
-                        if(validates.size() != encuestas.size()){
-                            if(validates.size() > encuestas.size()){
-                                int numero_agregar= validates.size()-encuestas.size();
+                        if(validates.size() != preguntas.size()){
+                            if(validates.size() > preguntas.size()){
+                                int numero_agregar= validates.size()-preguntas.size();
                                 int numero_encuestas= encuestas.size();
-
-                                progreso = new ProgressDialog(context);
-                                progreso.setMessage("Agregando datos...");
-                                progreso.show();
 
                                 for (int i=0; i<numero_agregar; i++){
                                     //Toast.makeText(getApplicationContext(), "Hay que agregar el s: "+ validates.get(numero_encuestas+i).getId().toString() + " - " + validates.get(numero_encuestas+i).getNombre(), Toast.LENGTH_SHORT).show();
-                                    insertEncuesta(validates.get(numero_encuestas+i).getId(), validates.get(numero_encuestas+i).getNombre());
+                                    insertPregunta(validates.get(numero_encuestas+i).getId(),
+                                            validates.get(numero_encuestas+i).getNombre(),
+                                            validates.get(numero_encuestas+i).getTipo(),
+                                            validates.get(numero_encuestas+i).getEncuesta2());
                                 }
-                                progreso.dismiss();
-                                Toast.makeText(getApplicationContext(), "Se agregaron  "+ String.valueOf(numero_agregar)+ " encuestas.", Toast.LENGTH_SHORT).show();
-                            }else if(validates.size() < encuestas.size()){
-                                int numero_eliminar= encuestas.size()-validates.size();
+                                Toast.makeText(getApplicationContext(), "Se agregaron  "+ String.valueOf(numero_agregar)+ " preguntas.", Toast.LENGTH_SHORT).show();
+                            }else if(validates.size() < preguntas.size()){
+                                int numero_eliminar= preguntas.size()-validates.size();
 
                                 for(int i=0; i<numero_eliminar; i++){
-                                    deleteEncuesta(encuestas.get(i));
+                                    deletePregunta(preguntas.get(i));
                                 }
 
-                                Toast.makeText(getApplicationContext(), "Se Eliminaron  "+ String.valueOf(numero_eliminar)+ " encuestas.", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(getApplicationContext(), "Se Eliminaron  "+ String.valueOf(numero_eliminar)+ " preguntas.", Toast.LENGTH_SHORT).show();
                             }
                         }
 
-                        for (int i=0; i<encuestas.size(); i++){
-                            if(encuestas.get(i).getId_encuesta() != validates.get(i).getId()){
-                                updateEncuesta(validates.get(i).getId(), validates.get(i).getNombre(), encuestas.get(i));
-                            }else if(encuestas.get(i).getNombre_encuesta() != validates.get(i).getNombre()){
-                                updateEncuesta(validates.get(i).getId(), validates.get(i).getNombre(), encuestas.get(i));
+                        for (int i=0; i<preguntas.size(); i++){
+                            if(preguntas.get(i).getId_pregunta() != validates.get(i).getId()){
+                                updatePregunta(validates.get(i).getId(),
+                                        validates.get(i).getNombre(),
+                                        validates.get(i).getTipo(),
+                                        validates.get(i).getEncuesta2(),
+                                        preguntas.get(i));
+                            }else if(preguntas.get(i).getNombre_pre() != validates.get(i).getNombre()){
+                                updatePregunta(validates.get(i).getId(),
+                                        validates.get(i).getNombre(),
+                                        validates.get(i).getTipo(),
+                                        validates.get(i).getEncuesta2(),
+                                        preguntas.get(i));
                             }
                         }
                     }
-
-                    obtenerList();
 
                 }catch (JSONException e) {
                     e.printStackTrace();
@@ -578,6 +589,14 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
 
     }
 
+    private void deletePregunta(Pregunta pregunta) {
+
+        realm.beginTransaction();
+        pregunta.deleteFromRealm();
+        realm.commitTransaction();
+
+    }
+
     //INSERT
 
     private void insertContacto(String encuesta, String telefono) {
@@ -594,6 +613,13 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
         realm.commitTransaction();
     }
 
+    private void  insertPregunta(int id_pre, String nomb_pre,int tipo, int encuesta){
+        realm.beginTransaction();
+        pregunta = new Pregunta(id_pre,nomb_pre,tipo,encuesta);
+        realm.copyToRealm(pregunta);
+        realm.commitTransaction();
+    }
+
     //UPDATE
 
     private void updateEncuesta(int id, String nom, Encuesta encuesta) {
@@ -601,6 +627,15 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
         encuesta.setId_encuesta(id);
         encuesta.setNombre_encuesta(nom);
         realm.copyToRealmOrUpdate(encuesta);
+        realm.commitTransaction();
+    }
+    private void updatePregunta(int id, String nom, int tipo, int encuesta2, Pregunta pregunta) {
+        realm.beginTransaction();
+        pregunta.setId_pregunta(id);
+        pregunta.setNombre_pre(nom);
+        pregunta.setTipo_pre(tipo);
+        pregunta.setEncuesta2(encuesta2);
+        realm.copyToRealmOrUpdate(pregunta);
         realm.commitTransaction();
     }
 

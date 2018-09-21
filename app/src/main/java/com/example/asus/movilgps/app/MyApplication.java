@@ -4,6 +4,7 @@ import android.app.Application;
 
 import com.example.asus.movilgps.models.Contacto;
 import com.example.asus.movilgps.models.Encuesta;
+import com.example.asus.movilgps.models.Pregunta;
 import com.example.asus.movilgps.models.usuario;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -22,6 +23,7 @@ public class MyApplication extends Application {
     public static AtomicInteger UsuarioID = new AtomicInteger();
     public static AtomicInteger ContactoID = new AtomicInteger();
     public static AtomicInteger EncuestaID = new AtomicInteger();
+    public static AtomicInteger PreguntaID = new AtomicInteger();
 
     @Override
     public void onCreate() {
@@ -33,6 +35,7 @@ public class MyApplication extends Application {
         UsuarioID = getIdByTable(realm, usuario.class);
         ContactoID = getIdByTable(realm, Contacto.class);
         EncuestaID = getIdByTable(realm, Encuesta.class);
+        PreguntaID = getIdByTable(realm, Pregunta.class);
         realm.close();
 
     }

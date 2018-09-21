@@ -58,9 +58,8 @@ import static android.icu.lang.UCharacter.NumericType.NUMERIC;
 public class PreguntasActivity extends AppCompatActivity implements Response.Listener<JSONObject>,
         Response.ErrorListener, AdapterView.OnItemClickListener{
 
-    ProgressDialog progreso;
-    Context context;
-   // ArrayList<Encuestas> encuestass;
+   ProgressDialog progreso;
+   Context context;
    ArrayList<Pregunta> preguntas;
    ArrayList<Respuesta> respuestas;
    ArrayList<validate> validates;
@@ -98,7 +97,7 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
         idEvento = getIntent().getStringExtra("evento");
         idEncuesta = getIntent().getStringExtra("idEncuesta");
 
-        cargarWebServicePreguntas(idEncuesta);
+        //cargarWebServicePreguntas(idEncuesta);
 
     }
 
@@ -136,11 +135,11 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
                         Toast.makeText(getApplicationContext(), "no existe en la bd", Toast.LENGTH_SHORT).show();
 
                     } else {
-                        pregunta.setId_pre(jsonObject.optInt("id_pgta"));
+                       /* pregunta.setId_pre(jsonObject.optInt("id_pgta"));
                         pregunta.setNombre_pre(jsonObject.optString("nomb_pgta"));
                         pregunta.setTipo_pre(jsonObject.optInt("tipo_pregunta"));
                         pregunta.setEstado(0);
-                        preguntas.add(pregunta);
+                        preguntas.add(pregunta);*/
                     }
                 }
             }
@@ -359,7 +358,7 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
 
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         Toast.makeText(context, "clic "+position, Toast.LENGTH_SHORT).show();
-        String id_pre = String.valueOf(preguntas.get(position).getId_pre());
+       // String id_pre = String.valueOf(preguntas.get(position).getId_pre());
         String pregunta = String.valueOf(preguntas.get(position).getNombre_pre());
 
         //showAlertSpinnerRespuestas(pregunta, id_pre, position);
@@ -367,6 +366,6 @@ public class PreguntasActivity extends AppCompatActivity implements Response.Lis
             posision=position;
             cargarWebServiceRespuestas(id_pre, position, pregunta);
         }*/
-        cargarWebServiceRespuestas(id_pre, position, pregunta);
+        //cargarWebServiceRespuestas(id_pre, position, pregunta);
     }
 }
