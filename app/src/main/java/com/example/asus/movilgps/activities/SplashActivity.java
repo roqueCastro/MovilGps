@@ -36,7 +36,7 @@ public class SplashActivity extends AppCompatActivity {
             public void run() {
                 if(conexion==1){
 
-                    Intent o = new Intent().setClass(SplashActivity.this,MensajeTextoActivity.class);
+                    Intent o = new Intent().setClass(SplashActivity.this, MainActivity.class);
                     startActivity(o);
                     finish();
                 }else{

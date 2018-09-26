@@ -132,13 +132,8 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
 
 //    Realm
     private Realm realm;
-
     private RealmResults<Contacto> contactos;
-
-    private Encuesta encuesta;
     private RealmResults<Encuesta> encuestas;
-
-    private Pregunta pregunta;
     private RealmResults<Pregunta> preguntas;
 
 
@@ -478,7 +473,7 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
         JSONArray json = response.optJSONArray("contacto");
 
        if(contactos.size()!=0){
-           deleteAll();
+
        }
         try {
 
@@ -535,9 +530,10 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
                     mensajeAlertaTextView(msj,timeMensAler);
                 }else{
                     cargarWebServiceContacto(idEncuesta);
+                    int idEnc = Integer.parseInt(idEncuesta);
                     String idEvento= response.toString();
                     Intent i = new Intent(MainActivity.this, PreguntasActivity.class);
-                    i.putExtra("idEncuesta", idEncuesta);
+                    i.putExtra("idEncuesta", idEnc);
                     i.putExtra("evento", idEvento);
                     startActivity(i);
                     finish();
@@ -608,14 +604,14 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
 
     private void  insertEncuesta(int idEnc, String nombEn){
         realm.beginTransaction();
-        encuesta = new Encuesta(idEnc,nombEn);
+        Encuesta encuesta = new Encuesta(idEnc,nombEn);
         realm.copyToRealm(encuesta);
         realm.commitTransaction();
     }
 
     private void  insertPregunta(int id_pre, String nomb_pre,int tipo, int encuesta){
         realm.beginTransaction();
-        pregunta = new Pregunta(id_pre,nomb_pre,tipo,encuesta);
+        Pregunta pregunta = new Pregunta(id_pre,nomb_pre,tipo,encuesta);
         realm.copyToRealm(pregunta);
         realm.commitTransaction();
     }
