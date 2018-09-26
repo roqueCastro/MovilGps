@@ -23,7 +23,6 @@ public class Pregunta extends RealmObject {
 
     private int encuesta2;
 
-
     public Pregunta() {
 
     }

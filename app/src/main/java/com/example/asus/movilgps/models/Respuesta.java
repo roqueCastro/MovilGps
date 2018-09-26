@@ -1,42 +1,58 @@
 package com.example.asus.movilgps.models;
 
-import android.content.Intent;
+import com.example.asus.movilgps.app.MyApplication;
 
-/**
- * Created by ASUS on 12/06/2018.
- */
+import io.realm.RealmObject;
+import io.realm.annotations.PrimaryKey;
 
-public class Respuesta {
-    private Integer id_resp;
-    private String nombre_resp;
-    private String tipo_pregunta;
+public class Respuesta extends RealmObject {
+
+    @PrimaryKey
+    private int id;
+    private int id_resp;
+    private String nom_resp;
+    private int pregunta;
     private String tipo_dato;
 
+    public Respuesta(int id_resp, String nom_resp, int pregunta, String tipo_dato) {
+        this.id = MyApplication.RespuestaID.incrementAndGet();
+        this.id_resp = id_resp;
+        this.nom_resp = nom_resp;
+        this.pregunta = pregunta;
+        this.tipo_dato = tipo_dato;
+    }
+    public Respuesta(){
 
+    }
 
-    public Integer getId_resp() {
+    public int getId() {
+        return id;
+    }
+
+    public int getId_resp() {
         return id_resp;
     }
 
-    public void setId_resp(Integer id_resp) {
+    public void setId_resp(int id_resp) {
         this.id_resp = id_resp;
     }
 
-    public String getNombre_resp() {
-        return nombre_resp;
+    public String getNom_resp() {
+        return nom_resp;
     }
 
-    public void setNombre_resp(String nombre_resp) {
-        this.nombre_resp = nombre_resp;
+    public void setNom_resp(String nom_resp) {
+        this.nom_resp = nom_resp;
     }
 
-    public String getTipo_pregunta() {
-        return tipo_pregunta;
+    public int getPregunta() {
+        return pregunta;
     }
 
-    public void setTipo_pregunta(String tipo_pregunta) {
-        this.tipo_pregunta = tipo_pregunta;
+    public void setPregunta(int pregunta) {
+        this.pregunta = pregunta;
     }
+
     public String getTipo_dato() {
         return tipo_dato;
     }

@@ -27,14 +27,11 @@ import com.android.volley.toolbox.Volley;
 import com.example.asus.movilgps.R;
 import com.example.asus.movilgps.Utilidades.Utilidades_Request;
 import com.example.asus.movilgps.adapters.PreguntaAdapte;
-import com.example.asus.movilgps.models.Contacto;
 import com.example.asus.movilgps.models.Pregunta;
-import com.example.asus.movilgps.models.Respuesta;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.util.List;
 
 import io.realm.Realm;
 import io.realm.RealmResults;
@@ -223,7 +220,7 @@ public class PreguntasActivity extends AppCompatActivity implements AdapterView.
     }
 
     private void cargarWebServiceRespuestas(String idPre, final int position, final String pregunta) {
-        progreso= new ProgressDialog(context);
+    /*    progreso= new ProgressDialog(context);
         progreso.setMessage("Cargando respuestas..");
         progreso.show();
 
@@ -271,7 +268,7 @@ public class PreguntasActivity extends AppCompatActivity implements AdapterView.
                         "No hay conexion con la base de datos.", Toast.LENGTH_SHORT).show();
             }
         });
-        request.add(jsonObjectRequest);
+        request.add(jsonObjectRequest);*/
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
@@ -286,7 +283,7 @@ public class PreguntasActivity extends AppCompatActivity implements AdapterView.
     }
 
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        Toast.makeText(context, "clic "+preguntas.get(position).getNombre_pre(), Toast.LENGTH_SHORT).show();
+        Toast.makeText(context, "clic "+preguntas.get(position).getId_pregunta(), Toast.LENGTH_SHORT).show();
 
        // String id_pre = String.valueOf(preguntas.get(position).getId_pre());
        // String pregunta = String.valueOf(preguntas.get(position).getNombre_pre());

@@ -65,6 +65,7 @@ import com.example.asus.movilgps.models.Contacto;
 import com.example.asus.movilgps.models.Encuesta;
 import com.example.asus.movilgps.models.Encuestas;
 import com.example.asus.movilgps.models.Pregunta;
+import com.example.asus.movilgps.models.Respuesta;
 import com.example.asus.movilgps.models.validate;
 
 import org.json.JSONArray;
@@ -135,6 +136,7 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
     private RealmResults<Contacto> contactos;
     private RealmResults<Encuesta> encuestas;
     private RealmResults<Pregunta> preguntas;
+    private RealmResults<Respuesta> respuestas;
 
 
     @Override
@@ -147,6 +149,7 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
         contactos = realm.where(Contacto.class).findAll();
         encuestas = realm.where(Encuesta.class).findAll();
         preguntas = realm.where(Pregunta.class).findAll();
+        respuestas = realm.where(Respuesta.class).findAll();
 
 
         gps = findViewById(R.id.fabGps);
@@ -399,7 +402,7 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
                         if(validates.size() != preguntas.size()){
                             if(validates.size() > preguntas.size()){
                                 int numero_agregar= validates.size()-preguntas.size();
-                                int numero_encuestas= encuestas.size();
+                                int numero_encuestas= preguntas.size();
 
                                 for (int i=0; i<numero_agregar; i++){
                                     //Toast.makeText(getApplicationContext(), "Hay que agregar el s: "+ validates.get(numero_encuestas+i).getId().toString() + " - " + validates.get(numero_encuestas+i).getNombre(), Toast.LENGTH_SHORT).show();
@@ -433,6 +436,109 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
                                         validates.get(i).getTipo(),
                                         validates.get(i).getEncuesta2(),
                                         preguntas.get(i));
+                            }
+                        }
+                    }
+
+                }catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+                cargarwebserviceAllRespuestas();
+
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                msj = "Error no hay conexion con la base de datos";
+                timeMensAler=5000;
+                mensajeCon.setBackgroundColor(mensajeCon.getContext().getResources().getColor(R.color.colorPrimaryDark));
+                mensajeCon.setTextColor(mensajeCon.getContext().getResources().getColor(R.color.white));
+                mensajeAlertaTextView(msj,timeMensAler);
+                btnEnvio.setEnabled(false);
+            }
+        });
+        request.add(jsonObjectRequest);
+    }
+
+    private void cargarwebserviceAllRespuestas() {
+        String url = Utilidades_Request.HTTP + Utilidades_Request.IP + Utilidades_Request.CARPETA + "WSConsultaAllRespuesta.php";
+
+        jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+                // Toast.makeText(getApplicationContext(), response.toString(), Toast.LENGTH_SHORT).show();
+
+                btnEnvio.setEnabled(true);
+
+                validate validate = null;
+
+                JSONArray json = response.optJSONArray("respuestaAll");
+
+                try {
+                    if(respuestas.size() == 0){
+                        for (int i = 0; i < json.length(); i++) {
+
+                            JSONObject jsonObject = null;
+                            jsonObject = json.getJSONObject(i);
+                            insertRespuesta(jsonObject.optInt("id_rpta"),
+                                    jsonObject.optString("nomb_rpta"),
+                                    jsonObject.optInt("pregunta"),
+                                    jsonObject.optString("tipo_dato"));
+                        }
+                    }
+                    else{
+                        validates = new ArrayList<>();
+                        for (int i = 0; i < json.length(); i++) {
+
+                            validate = new validate();
+                            JSONObject jsonObject = null;
+                            jsonObject = json.getJSONObject(i);
+
+                            validate.setId(jsonObject.optInt("id_rpta"));
+                            validate.setNombre(jsonObject.optString("nomb_rpta"));
+                            validate.setPregunta_resp(jsonObject.optInt("pregunta"));
+                            validate.setTipo_dato(jsonObject.optString("tipo_dato"));
+                            validates.add(validate);
+                        }
+
+                        if(validates.size() != respuestas.size()){
+                            if(validates.size() > respuestas.size()){
+                                int numero_agregar= validates.size()-respuestas.size();
+                                int numero_encuestas= respuestas.size();
+
+                                for (int i=0; i<numero_agregar; i++){
+                                    //Toast.makeText(getApplicationContext(), "Hay que agregar el s: "+ validates.get(numero_encuestas+i).getId().toString() + " - " + validates.get(numero_encuestas+i).getNombre(), Toast.LENGTH_SHORT).show();
+                                    insertRespuesta(validates.get(numero_encuestas+i).getId(),
+                                            validates.get(numero_encuestas+i).getNombre(),
+                                            validates.get(numero_encuestas+i).getPregunta_resp(),
+                                            validates.get(numero_encuestas+i).getTipo_dato());
+                                }
+                                Toast.makeText(getApplicationContext(), "Se agregaron  "+ String.valueOf(numero_agregar)+ " preguntas.", Toast.LENGTH_SHORT).show();
+                            }else if(validates.size() < respuestas.size()){
+                                int numero_eliminar= respuestas.size()-validates.size();
+
+                                for(int i=0; i<numero_eliminar; i++){
+                                    deleteRespuesta(respuestas.get(i));
+                                }
+
+                                Toast.makeText(getApplicationContext(), "Se Eliminaron  "+ String.valueOf(numero_eliminar)+ " preguntas.", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+
+                        for (int i=0; i<respuestas.size(); i++){
+                            if(respuestas.get(i).getId_resp() != validates.get(i).getId()){
+                                updateRespuesta(validates.get(i).getId(),
+                                        validates.get(i).getNombre(),
+                                        validates.get(i).getPregunta_resp(),
+                                        validates.get(i).getTipo_dato(),
+                                        respuestas.get(i));
+                            }else if(respuestas.get(i).getNom_resp() != validates.get(i).getNombre()){
+                                updateRespuesta(validates.get(i).getId(),
+                                        validates.get(i).getNombre(),
+                                        validates.get(i).getPregunta_resp(),
+                                        validates.get(i).getTipo_dato(),
+                                        respuestas.get(i));
                             }
                         }
                     }
@@ -592,6 +698,13 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
         realm.commitTransaction();
 
     }
+    private void deleteRespuesta(Respuesta respuesta) {
+
+        realm.beginTransaction();
+        respuesta.deleteFromRealm();
+        realm.commitTransaction();
+
+    }
 
     //INSERT
 
@@ -616,6 +729,13 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
         realm.commitTransaction();
     }
 
+    private void  insertRespuesta(int id_resp, String nomb_resp,int pregunta, String tipo_dato){
+        realm.beginTransaction();
+        Respuesta respuesta = new Respuesta(id_resp,nomb_resp,pregunta,tipo_dato);
+        realm.copyToRealm(respuesta);
+        realm.commitTransaction();
+    }
+
     //UPDATE
 
     private void updateEncuesta(int id, String nom, Encuesta encuesta) {
@@ -632,6 +752,15 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
         pregunta.setTipo_pre(tipo);
         pregunta.setEncuesta2(encuesta2);
         realm.copyToRealmOrUpdate(pregunta);
+        realm.commitTransaction();
+    }
+    private void updateRespuesta(int id, String nom, int pregunta, String tipo_dato, Respuesta respuesta) {
+        realm.beginTransaction();
+        respuesta.setId_resp(id);
+        respuesta.setNom_resp(nom);
+        respuesta.setPregunta(pregunta);
+        respuesta.setTipo_dato(tipo_dato);
+        realm.copyToRealmOrUpdate(respuesta);
         realm.commitTransaction();
     }
 
