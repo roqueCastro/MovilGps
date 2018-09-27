@@ -8,25 +8,22 @@ import android.widget.BaseAdapter;
 import android.widget.TextView;
 
 import com.example.asus.movilgps.R;
-import com.example.asus.movilgps.models.Pregunta;
+import com.example.asus.movilgps.models.Respuesta;
 
 import java.util.List;
 
-/**
- * Created by ASUS on 08/06/2018.
- */
-
-public class PreguntaAdapte extends BaseAdapter {
+public class RespuestaAdapter extends BaseAdapter {
 
     private Context context;
-    private List<Pregunta> list;
+    private List<Respuesta> list;
     private int layout;
 
-    public PreguntaAdapte(Context context, List<Pregunta> list, int layout) {
+    public RespuestaAdapter(Context context, List<Respuesta> list, int layout) {
         this.context = context;
         this.list = list;
         this.layout = layout;
     }
+
 
     @Override
     public int getCount() {
@@ -45,28 +42,27 @@ public class PreguntaAdapte extends BaseAdapter {
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-
         ViewHolder vh;
 
         if (convertView == null) {
             convertView = LayoutInflater.from(context).inflate(layout, null);
-            vh = new ViewHolder();
-            vh.nombrePregunta = (TextView) convertView.findViewById(R.id.textViewPregunta);
+            vh = new RespuestaAdapter.ViewHolder();
+            vh.titulo = (TextView) convertView.findViewById(R.id.tituloSpinnerE);
 
             convertView.setTag(vh);
 
         } else {
-            vh = (ViewHolder) convertView.getTag();
+            vh = (RespuestaAdapter.ViewHolder) convertView.getTag();
         }
 
-        Pregunta pregunta = list.get(position);
-        vh.nombrePregunta.setText(pregunta.getNombre_pre());
-        vh.nombrePregunta.setTextColor(vh.nombrePregunta.getContext().getResources().getColor(R.color.rojo));
+        Respuesta respuesta = list.get(position);
+        vh.titulo.setText(respuesta.getNom_resp());
 
         return convertView;
     }
 
     public class ViewHolder {
-        TextView nombrePregunta;
+        TextView titulo;
     }
 }
+

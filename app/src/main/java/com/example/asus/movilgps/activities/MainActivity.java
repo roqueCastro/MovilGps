@@ -64,6 +64,7 @@ import com.example.asus.movilgps.adapters.EncuestaAdapter;
 import com.example.asus.movilgps.models.Contacto;
 import com.example.asus.movilgps.models.Encuesta;
 import com.example.asus.movilgps.models.Encuestas;
+import com.example.asus.movilgps.models.Evento;
 import com.example.asus.movilgps.models.Pregunta;
 import com.example.asus.movilgps.models.Respuesta;
 import com.example.asus.movilgps.models.validate;
@@ -110,6 +111,7 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
     int permissionCheck;
     int timeMensAler;
     int selec=0;
+    int internet = 0;
 
     final long PERIODO = 60000; // 1 minuto
     private Handler handler;
@@ -137,6 +139,7 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
     private RealmResults<Encuesta> encuestas;
     private RealmResults<Pregunta> preguntas;
     private RealmResults<Respuesta> respuestas;
+    private RealmResults<Evento> eventos;
 
 
     @Override
@@ -208,9 +211,25 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
                     String lat = latitude.getText().toString();
                     String lon = longitude.getText().toString();
 
-                    if(lat != "" && lon != ""){
+                    if(lat != "Latitud (Desconocida)" && lon != "Longitud (Desconocida)"){
                         if(bitmap != null){
-                            cargarWebServiceRegistro_Coo_Ima(lat, lon, idEncuesta);
+                            if(internet==0){
+                                cargarWebServiceRegistro_Coo_Ima(lat, lon, idEncuesta);
+                            }else{
+                                String imagen =convertirImgString(bitmap);
+                                int enc = Integer.parseInt(idEncuesta);
+                                insertEvento(lat, lon,enc,1,imagen);
+                                eventos = realm.where(Evento.class).findAll();
+
+                                int posision = eventos.size()-1;
+                                String idEvento = String.valueOf(eventos.get(posision).getId());
+                                Intent i = new Intent(MainActivity.this, PreguntasActivity.class);
+                                i.putExtra("idEncuesta", enc);
+                                i.putExtra("evento", idEvento);
+                                startActivity(i);
+                                finish();
+
+                            }
                         }else{
                             msj = "Tienes que tomar una foto";
                             timeMensAler=5000;
@@ -352,7 +371,8 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
                 mensajeCon.setBackgroundColor(mensajeCon.getContext().getResources().getColor(R.color.colorPrimaryDark));
                 mensajeCon.setTextColor(mensajeCon.getContext().getResources().getColor(R.color.white));
                 mensajeAlertaTextView(msj,timeMensAler);
-                btnEnvio.setEnabled(false);
+                internet=1;
+                btnEnvio.setEnabled(true);
             }
         });
         request.add(jsonObjectRequest);
@@ -712,6 +732,13 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
         realm.beginTransaction();
         Contacto contacto = new Contacto(encuesta,telefono);
         realm.copyToRealm(contacto);
+        realm.commitTransaction();
+    }
+
+    private void insertEvento(String latitud, String longitud, int encuesta, int usuario, String imagen) {
+        realm.beginTransaction();
+        Evento evento = new Evento(latitud,longitud,encuesta,usuario,imagen);
+        realm.copyToRealm(evento);
         realm.commitTransaction();
     }
 

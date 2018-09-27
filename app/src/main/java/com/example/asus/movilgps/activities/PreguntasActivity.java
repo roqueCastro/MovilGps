@@ -27,7 +27,10 @@ import com.android.volley.toolbox.Volley;
 import com.example.asus.movilgps.R;
 import com.example.asus.movilgps.Utilidades.Utilidades_Request;
 import com.example.asus.movilgps.adapters.PreguntaAdapte;
+import com.example.asus.movilgps.adapters.RespuestaAdapter;
 import com.example.asus.movilgps.models.Pregunta;
+import com.example.asus.movilgps.models.Respuesta;
+import com.example.asus.movilgps.models.Resultado;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -35,6 +38,8 @@ import org.json.JSONObject;
 
 import io.realm.Realm;
 import io.realm.RealmResults;
+
+import static java.sql.Types.NUMERIC;
 
 public class PreguntasActivity extends AppCompatActivity implements AdapterView.OnItemClickListener{
 
@@ -45,6 +50,7 @@ public class PreguntasActivity extends AppCompatActivity implements AdapterView.
    //    Realm
    private Realm realm;
    private RealmResults<Pregunta> preguntas;
+   private RealmResults<Respuesta> respuestas;
 
 
    ListView listView;
@@ -52,11 +58,8 @@ public class PreguntasActivity extends AppCompatActivity implements AdapterView.
    private int idEncuesta;
    private String resultado = "";
    Spinner spinnerRespuestas;
-   private TextView nom_pre_abie;
-   int valorRta;
    int posision = 900000;
-   String Latitude;
-   String Longitude;
+
 
 
     RequestQueue request;
@@ -64,6 +67,7 @@ public class PreguntasActivity extends AppCompatActivity implements AdapterView.
     StringRequest stringRequest;
 
     AlertDialog dialog;
+    private RespuestaAdapter adapterR;
 
 
     @Override
@@ -92,183 +96,66 @@ public class PreguntasActivity extends AppCompatActivity implements AdapterView.
         listView.setAdapter(adapter);
     }
 
-    private void showAlertSpinnerRespuestas(String title, final int position) {
+    private void insertResultado(int evento, String rsta, int respuesta) {
+        realm.beginTransaction();
+        Resultado resultado = new Resultado(evento,rsta,respuesta);
+        realm.copyToRealm(resultado);
+        realm.commitTransaction();
+    }
+
+    private void showAlertSpinnerRespuestas(String title, final int tipo_pre) {
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         if (title != null) builder.setTitle(title);
         final View viewInflated = LayoutInflater.from(this).inflate(R.layout.dialog_spinner_respuestas, null);
         builder.setView(viewInflated);
 
-        spinnerRespuestas = viewInflated.findViewById(R.id.spinnerSeleRespuesta);
         final EditText EditRespuesta = (EditText)viewInflated.findViewById(R.id.editTextRespuesta);
+        if(tipo_pre==1){
 
-       // ArrayAdapter<CharSequence> adapter =  new ArrayAdapter(this,android.R.layout.simple_spinner_item,listaRespuestas);
-        spinnerRespuestas.setAdapter(adapter);
+        }else{
+            EditRespuesta.setVisibility(View.INVISIBLE);
+            spinnerRespuestas = viewInflated.findViewById(R.id.spinnerSeleRespuesta);
+            adapterR= new RespuestaAdapter(this,respuestas,R.layout.spinner_view_encuesta);
+            spinnerRespuestas.setAdapter(adapterR);
 
-        spinnerRespuestas.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-               /* if(position!=0) {
-
-                    EditRespuesta.setVisibility(viewInflated.VISIBLE);
-                    int posisionRespuesta = position - 1;
-                   // String tipoRespuesta = respuestas.get(posisionRespuesta).getTipo_dato();
-
-
-                    if(tipoRespuesta.equals("numerico")){
+            spinnerRespuestas.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                    if(respuestas.get(position).getTipo_dato().equals("numerico")){
+                        EditRespuesta.setVisibility(View.VISIBLE);
                         EditRespuesta.setInputType(NUMERIC);
-                    }else if (tipoRespuesta.equals("multiple")){
-                        EditRespuesta.setText(respuestas.get(posisionRespuesta).getNombre_resp());
-                        EditRespuesta.setEnabled(false);
-                    }else if(tipoRespuesta.equals("texto")){
-
+                    }else if (respuestas.get(position).getTipo_dato().equals("multiple")){
+                        EditRespuesta.setVisibility(View.INVISIBLE);
+                    }else if(respuestas.get(position).getTipo_dato().equals("texto")){
+                        EditRespuesta.setVisibility(View.VISIBLE);
                     }
 
-                }else{
-                    EditRespuesta.setVisibility(viewInflated.INVISIBLE);
-                }*/
-            }
+                }
 
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
+                @Override
+                public void onNothingSelected(AdapterView<?> parent) {
 
-            }
-        });
+                }
+            });
+        }
 
         builder.setPositiveButton("Enviar", new DialogInterface.OnClickListener() {
 
             public void onClick(DialogInterface dialog, int which) {
-
-                /*if (spinnerRespuestas.getSelectedItemPosition() != 0) {
-
-                    int pos = spinnerRespuestas.getSelectedItemPosition() - 1;
-                    String tipo = respuestas.get(pos).getTipo_dato();
-
-                    if (tipo.equals("numerico") || tipo.equals("texto")) {
-
-                        if (EditRespuesta.getText().toString().equals("")) {
-                            Toast.makeText(getApplicationContext(), "Ingresa en el campo!!", Toast.LENGTH_SHORT).show();
-                        } else {
-                            String idRespuesta = String.valueOf(respuestas.get(pos).getId_resp());
-                            resultado = EditRespuesta.getText().toString();
-                            cargarWebServiceRegistroResultado(idRespuesta, idEvento, position);
-                        }
-
-                    } else if (tipo.equals("multiple")) {
-
-                        String idRespuesta = String.valueOf(respuestas.get(pos).getId_resp());
-                        cargarWebServiceRegistroResultado(idRespuesta, idEvento, position);
+                if(tipo_pre==1){
+                    String resul = EditRespuesta.getText().toString().trim();
+                    if(resul.length() > 0){
+                        //  insertResultado(idEvento,resul,);
+                    }else{
+                        Toast.makeText(getApplicationContext(), "Tienes que escribir una respuesta", Toast.LENGTH_LONG).show();
                     }
-                }else{
-                    Toast.makeText(getApplicationContext(), "Selecciona alguna respuesta", Toast.LENGTH_SHORT).show();
-                }*/
+                }
             }
 
         });
 
         dialog = builder.create();
         dialog.show();
-    }
-
-    private void cargarWebServiceRegistroResultado(final String idRespuesta, final String idEvento, final int position) {
-        /*progreso= new ProgressDialog(context);
-        progreso.setMessage("Registrando respuesta..");
-        progreso.show();
-
-        String url = Utilidades_Request.HTTP+Utilidades_Request.IP+Utilidades_Request.CARPETA+"wsJSONRegistroResultado.php?";
-
-        stringRequest = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-                progreso.hide();
-
-
-                if(response.trim().equalsIgnoreCase("Noregistra")){
-                    Toast.makeText(context,"No registro ocurrio un error ", Toast.LENGTH_SHORT).show();
-
-                }else{
-                    Toast.makeText(context,"Registro Exitoso. ", Toast.LENGTH_SHORT).show();
-                    preguntas.remove(position);
-                    resultado="";
-                    if(preguntas.size()==0){
-                        Intent intent = new Intent(PreguntasActivity.this, UltimaActivity.class);
-                        startActivity(intent);
-                        finish();
-                    }else{
-                        //cargarWebServicePreguntas(idEncuesta);
-                    }
-                }
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                progreso.hide();
-                Toast.makeText(context,"Ocurrio un error en el servidor " + error.toString(), Toast.LENGTH_SHORT).show();
-                Log.i("Error", error.toString());
-            }
-        }){
-            @Override
-            protected Map<String, String> getParams() throws AuthFailureError {
-
-                Map<String,String> paramentros = new HashMap<>();
-                paramentros.put("idEvento", idEvento);
-                paramentros.put("resultado",resultado);
-                paramentros.put("idRespuesta",idRespuesta);
-                return paramentros;
-            }
-        };
-        request.add(stringRequest);*/
-    }
-
-    private void cargarWebServiceRespuestas(String idPre, final int position, final String pregunta) {
-    /*    progreso= new ProgressDialog(context);
-        progreso.setMessage("Cargando respuestas..");
-        progreso.show();
-
-        String url = Utilidades_Request.HTTP + Utilidades_Request.IP + Utilidades_Request.CARPETA + "wsJSONConsultaRespuestas.php?id_pregunta="+idPre;
-
-        jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
-
-            @RequiresApi(api = Build.VERSION_CODES.N)
-            public void onResponse(JSONObject response) {
-                // Toast.makeText(getApplicationContext(), response.toString(), Toast.LENGTH_SHORT).show();
-                progreso.dismiss();
-               // respuestas = new ArrayList<>();
-                Respuesta respuesta = null;
-
-                JSONArray json = response.optJSONArray("respuesta");
-
-                try {
-                        for (int i = 0; i < json.length(); i++) {
-
-                            respuesta = new Respuesta();
-                            JSONObject jsonObject = null;
-                            jsonObject = json.getJSONObject(i);
-
-                            if(jsonObject.optInt("id_rpta")!=0){
-                                respuesta.setId_resp(jsonObject.optInt("id_rpta"));
-                                respuesta.setNombre_resp(jsonObject.optString("nomb_rpta"));
-                                respuesta.setTipo_pregunta(jsonObject.optString("tipo_pregunta"));
-                                respuesta.setTipo_dato(jsonObject.optString("tipo_dato"));
-                                //respuestas.add(respuesta);
-                            }
-
-                        }
-                        obtenerlistRespuesta(pregunta,position);
-
-
-                }catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                progreso.dismiss();
-                Toast.makeText(context, "Error webservice. \n"+
-                        "No hay conexion con la base de datos.", Toast.LENGTH_SHORT).show();
-            }
-        });
-        request.add(jsonObjectRequest);*/
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
@@ -283,16 +170,16 @@ public class PreguntasActivity extends AppCompatActivity implements AdapterView.
     }
 
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        Toast.makeText(context, "clic "+preguntas.get(position).getId_pregunta(), Toast.LENGTH_SHORT).show();
 
-       // String id_pre = String.valueOf(preguntas.get(position).getId_pre());
-       // String pregunta = String.valueOf(preguntas.get(position).getNombre_pre());
+        int idPre = preguntas.get(position).getId_pregunta();
+        String pregunta = String.valueOf(preguntas.get(position).getNombre_pre());
+        respuestas = realm.where(Respuesta.class).equalTo("pregunta", idPre).findAll();
 
-        //showAlertSpinnerRespuestas(pregunta, id_pre, position);
-        /*if(posision != position){
-            posision=position;
-            cargarWebServiceRespuestas(id_pre, position, pregunta);
-        }*/
-        //cargarWebServiceRespuestas(id_pre, position, pregunta);
+        if(respuestas.size() != 0){
+            showAlertSpinnerRespuestas(pregunta, preguntas.get(position).getTipo_pre());
+        }else{
+            Toast.makeText(getApplicationContext(), "No tiene respuestas!!!!", Toast.LENGTH_SHORT).show();
+        }
+
     }
 }
