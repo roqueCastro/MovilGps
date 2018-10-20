@@ -23,16 +23,19 @@ public class Pregunta extends RealmObject {
 
     private int encuesta2;
 
+    private int estado;
+
     public Pregunta() {
 
     }
 
-    public Pregunta(int id_pregunta, String nombre_pre, int tipo_pre, int encuesta2) {
+    public Pregunta(int id_pregunta, String nombre_pre, int tipo_pre, int encuesta2, int estado) {
         this.id = MyApplication.PreguntaID.incrementAndGet();
         this.id_pregunta = id_pregunta;
         this.nombre_pre = nombre_pre;
         this.tipo_pre = tipo_pre;
         this.encuesta2 = encuesta2;
+        this.estado = estado;
     }
 
     public int getId() {
@@ -69,5 +72,13 @@ public class Pregunta extends RealmObject {
 
     public void setEncuesta2(int encuesta2) {
         this.encuesta2 = encuesta2;
+    }
+
+    public int getEstado() {
+        return estado;
+    }
+
+    public void setEstado(int estado) {
+        this.estado = estado;
     }
 }

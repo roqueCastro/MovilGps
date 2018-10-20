@@ -60,8 +60,13 @@ public class PreguntaAdapte extends BaseAdapter {
         }
 
         Pregunta pregunta = list.get(position);
-        vh.nombrePregunta.setText(pregunta.getNombre_pre());
-        vh.nombrePregunta.setTextColor(vh.nombrePregunta.getContext().getResources().getColor(R.color.rojo));
+        if(pregunta.getEstado()==1){
+            vh.nombrePregunta.setText(pregunta.getNombre_pre());
+            vh.nombrePregunta.setTextColor(vh.nombrePregunta.getContext().getResources().getColor(R.color.verde_oscuro));
+        }else{
+            vh.nombrePregunta.setText(pregunta.getNombre_pre());
+            vh.nombrePregunta.setTextColor(vh.nombrePregunta.getContext().getResources().getColor(R.color.rojo));
+        }
 
         return convertView;
     }

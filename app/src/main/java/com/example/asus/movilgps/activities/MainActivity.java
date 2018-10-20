@@ -170,6 +170,7 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
         permissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
 
         obtenerList();
+        actualizarPreguntas();
 
         cargarwebservice();
         locationStart();
@@ -213,9 +214,9 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
 
                     if(lat != "Latitud (Desconocida)" && lon != "Longitud (Desconocida)"){
                         if(bitmap != null){
-                            if(internet==0){
+                           /* if(internet==0){
                                 cargarWebServiceRegistro_Coo_Ima(lat, lon, idEncuesta);
-                            }else{
+                            }else{*/
                                 String imagen =convertirImgString(bitmap);
                                 int enc = Integer.parseInt(idEncuesta);
                                 insertEvento(lat, lon,enc,1,imagen);
@@ -229,7 +230,7 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
                                 startActivity(i);
                                 finish();
 
-                            }
+                            /*}*/
                         }else{
                             msj = "Tienes que tomar una foto";
                             timeMensAler=5000;
@@ -268,6 +269,15 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
             }
         });
     }
+
+    private void actualizarPreguntas() {
+        for(int i=0; i<preguntas.size(); i++){
+            if(preguntas.get(i).getEstado()==1){
+                updatePreguntaEstado(0, preguntas.get(i));
+            }
+        }
+    }
+
     /*---------------------MENSAJES DE ALERTAS PARA EL SISTEMA---------------------*/
     private void mensajeAlertaTextView(String msj, int timeMensAler) {
         mensajeCon.setText(msj);
@@ -358,6 +368,7 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
 
                     obtenerList();
                     cargarwebserviceAllPreguntas();
+                    actualizarPreguntas();
 
                 }catch (JSONException e) {
                     e.printStackTrace();
@@ -751,7 +762,7 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
 
     private void  insertPregunta(int id_pre, String nomb_pre,int tipo, int encuesta){
         realm.beginTransaction();
-        Pregunta pregunta = new Pregunta(id_pre,nomb_pre,tipo,encuesta);
+        Pregunta pregunta = new Pregunta(id_pre,nomb_pre,tipo,encuesta, 0);
         realm.copyToRealm(pregunta);
         realm.commitTransaction();
     }
@@ -788,6 +799,12 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
         respuesta.setPregunta(pregunta);
         respuesta.setTipo_dato(tipo_dato);
         realm.copyToRealmOrUpdate(respuesta);
+        realm.commitTransaction();
+    }
+    private void updatePreguntaEstado(int estado, Pregunta pregunta) {
+        realm.beginTransaction();
+        pregunta.setEstado(estado);
+        realm.copyToRealmOrUpdate(pregunta);
         realm.commitTransaction();
     }
 
