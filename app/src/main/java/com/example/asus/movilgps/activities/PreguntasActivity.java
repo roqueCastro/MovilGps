@@ -92,8 +92,8 @@ public class PreguntasActivity extends AppCompatActivity implements AdapterView.
         listView = findViewById(R.id.listViewPreguntas);
         listView.setOnItemClickListener(this);
 
-        idEvento = getIntent().getExtras().getInt("evento");
         idEncuesta = getIntent().getExtras().getInt("idEncuesta");
+        idEvento = getIntent().getExtras().getInt("event");
         preguntas = realm.where(Pregunta.class).equalTo("encuesta2", idEncuesta).findAll();
 
         //cargarWebServicePreguntas(idEncuesta);
@@ -108,6 +108,7 @@ public class PreguntasActivity extends AppCompatActivity implements AdapterView.
 
     private void cargarWebServiceRegistro_Coo_Ima(final String latitude, final String longitude, final String idEncuesta, final String imagen, final int idEven, final Evento evento) {
         String url = Utilidades_Request.HTTP+Utilidades_Request.IP+Utilidades_Request.CARPETA+"wsJSONRegistroEvento.php?";
+
         resultados = realm.where(Resultado.class).findAll();
 
         stringRequest = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
@@ -132,7 +133,7 @@ public class PreguntasActivity extends AppCompatActivity implements AdapterView.
                             e.printStackTrace();
                         }
                     }
-                    deleteEvento(evento);
+                        deleteEvento(evento);
                     Toast.makeText(getApplicationContext(), "Hecho", Toast.LENGTH_SHORT).show();
                 }
             }
@@ -247,7 +248,9 @@ public class PreguntasActivity extends AppCompatActivity implements AdapterView.
                         cargarWebServiceRegistro_Coo_Ima(eventos.get(i).getLatitud(),
                                 eventos.get(i).getLongitud(),
                                 idEncuesta,
-                                eventos.get(i).getImagen(), eventos.get(i).getId(), eventos.get(i));
+                                eventos.get(i).getImagen(),
+                                eventos.get(i).getId(),
+                                eventos.get(i));
                     }
                     Intent i = new Intent(PreguntasActivity.this, UltimaActivity.class);
                     startActivity(i);

@@ -223,10 +223,12 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
                                 eventos = realm.where(Evento.class).findAll();
 
                                 int posision = eventos.size()-1;
-                                String idEvento = String.valueOf(eventos.get(posision).getId());
+                                int idEvento = eventos.get(posision).getId();
                                 Intent i = new Intent(MainActivity.this, PreguntasActivity.class);
+
+                                i.putExtra("event", idEvento);
                                 i.putExtra("idEncuesta", enc);
-                                i.putExtra("evento", idEvento);
+
                                 startActivity(i);
                                 finish();
 
@@ -1206,7 +1208,8 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()){
             case R.id.upload:
-                cargarwebservice();
+                deleteAll();
+//                cargarwebservice();
                 // startActivity(getIntent());
                 break;
         }
