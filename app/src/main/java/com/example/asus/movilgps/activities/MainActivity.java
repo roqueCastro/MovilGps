@@ -67,6 +67,7 @@ import com.example.asus.movilgps.models.Encuestas;
 import com.example.asus.movilgps.models.Evento;
 import com.example.asus.movilgps.models.Pregunta;
 import com.example.asus.movilgps.models.Respuesta;
+import com.example.asus.movilgps.models.Resultado;
 import com.example.asus.movilgps.models.validate;
 
 import org.json.JSONArray;
@@ -139,6 +140,7 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
     private RealmResults<Encuesta> encuestas;
     private RealmResults<Pregunta> preguntas;
     private RealmResults<Respuesta> respuestas;
+    private RealmResults<Resultado> resultados;
     private RealmResults<Evento> eventos;
 
 
@@ -153,6 +155,7 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
         encuestas = realm.where(Encuesta.class).findAll();
         preguntas = realm.where(Pregunta.class).findAll();
         respuestas = realm.where(Respuesta.class).findAll();
+        eventos = realm.where(Evento.class).findAll();
 
 
         gps = findViewById(R.id.fabGps);
@@ -169,6 +172,7 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
         btnEnvio.setEnabled(false);
         permissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
 
+        analizarEventos();
         obtenerList();
         actualizarPreguntas();
 
@@ -271,6 +275,37 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
             }
         });
     }
+
+    /* ENVIO DE DATOS A LA NUBE */
+    private void analizarEventos() {
+        JSONObject jsonObject = new JSONObject();
+        if(eventos.size() > 0){
+            for(int i = 0; i<eventos.size(); i++){
+                int id_evento = eventos.get(i).getId();
+                String fecha;
+                String lat;
+                String lng;
+                String img;
+                int encuesta;
+
+                resultados = realm.where(Resultado.class).equalTo("evento", id_evento).findAll();
+                for (int o =0; o<resultados.size(); o++){
+                    try {
+                        jsonObject.put("resultado", resultados.get(o).getResultado());
+                        jsonObject.put("respuesta", resultados.get(o).getRespuesta());
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+                if(cargarwebserviceaviso() == true){
+
+                }
+                Toast.makeText(getApplicationContext(),"Hola", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+
 
     private void actualizarPreguntas() {
         for(int i=0; i<preguntas.size(); i++){
@@ -389,6 +424,25 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
             }
         });
         request.add(jsonObjectRequest);
+    }
+
+    private boolean cargarwebserviceaviso() {
+        final Boolean[] resp = new Boolean[1];
+        String url = Utilidades_Request.HTTP + Utilidades_Request.IP + Utilidades_Request.CARPETA + "WSConsultaEncuestas.php";
+
+        jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                resp[0] = false;
+            }
+        });
+        request.add(jsonObjectRequest);
+        return resp[0];
     }
 
     private void cargarwebserviceAllPreguntas() {
@@ -1208,8 +1262,8 @@ public class MainActivity extends AppCompatActivity implements Response.Listener
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()){
             case R.id.upload:
-                deleteAll();
-//                cargarwebservice();
+//                deleteAll();
+                cargarwebservice();
                 // startActivity(getIntent());
                 break;
         }
